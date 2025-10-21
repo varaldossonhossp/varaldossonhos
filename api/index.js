@@ -83,46 +83,62 @@ export default async function handler(req, res) {
 
   try {
     // ============================================================
-    // 🗓️ EVENTOS — destaques (Home/carrossel)
-    // ============================================================
-    if ((pathname === "/api/eventos" || rota === "eventos") && method === "GET") {
-      const records = await base("eventos")
-        .select({
-          filterByFormula: "({destaque_home} = TRUE())",
-          sort: [{ field: "data_inicio", direction: "asc" }],
-        })
-        .firstPage();
+// 🗓️ EVENTOS — destaques (Home/carrossel)
+// ============================================================
+if ((pathname === "/api/eventos" || rota === "eventos") && method === "GET") {
+  try {
+    const records = await base("eventos")
+      .select({
+        filterByFormula: "IF({destaque_home}=TRUE(), TRUE(), FALSE())",
+        sort: [{ field: "data_inicio", direction: "asc" }],
+      })
+      .all();
 
-      const eventos = records.map((r) => ({
-        id: r.id,
-        nome: r.fields.nome_evento || r.fields.nome || "Evento sem nome",
-        data_inicio: r.fields.data_inicio || "",
-        descricao: r.fields.descricao || "",
-        imagem:
-          r.fields.imagem_evento?.[0]?.url || r.fields.imagem?.[0]?.url || "/imagens/evento-padrao.jpg",
-      }));
-      return sendJson(res, 200, eventos);
-    }
+    const eventos = (records || []).map((r) => ({
+      id: r.id,
+      nome: r.fields.nome_evento || r.fields.nome || "Evento sem nome",
+      data_inicio: r.fields.data_inicio || "",
+      descricao: r.fields.descricao || "",
+      imagem:
+        r.fields.imagem_evento?.[0]?.url ||
+        r.fields.Imagem_evento?.[0]?.url ||
+        "/imagens/evento-padrao.jpg",
+    }));
 
-    // ============================================================
-    // 📅 EVENTOS-TODOS — lista completa
-    // ============================================================
-    if ((pathname === "/api/eventos-todos" || rota === "eventos-todos") && method === "GET") {
-      const records = await base("eventos").select().all();
-      const eventos = records.map((r) => ({
-        id: r.id,
-        nome: r.fields.nome_evento || r.fields.nome || "Evento sem nome",
-        data_inicio: r.fields.data_inicio || "",
-        data_fim: r.fields.data_fim || "",
-        descricao: r.fields.descricao || "",
-        local: r.fields.local || r.fields.escola_local || "",
-        responsavel: r.fields.responsavel || "",
-        status: r.fields.status || "",
-        imagem:
-          r.fields.imagem_evento?.[0]?.url || r.fields.imagem?.[0]?.url || "/imagens/evento-padrao.jpg",
-      }));
-      return sendJson(res, 200, eventos);
-    }
+    return sendJson(res, 200, eventos);
+  } catch (erro) {
+    console.error("Erro ao buscar eventos:", erro);
+    return sendJson(res, 500, { error: erro.message });
+  }
+}
+
+// ============================================================
+// 📅 EVENTOS-TODOS — lista completa
+// ============================================================
+if ((pathname === "/api/eventos-todos" || rota === "eventos-todos") && method === "GET") {
+  try {
+    const records = await base("eventos").select({ sort: [{ field: "data_inicio", direction: "asc" }] }).all();
+
+    const eventos = (records || []).map((r) => ({
+      id: r.id,
+      nome: r.fields.nome_evento || r.fields.nome || "Evento sem nome",
+      data_inicio: r.fields.data_inicio || "",
+      data_fim: r.fields.data_fim || "",
+      descricao: r.fields.descricao || "",
+      local: r.fields.local || r.fields.escola_local || "",
+      status: r.fields.status || "",
+      imagem:
+        r.fields.imagem_evento?.[0]?.url ||
+        r.fields.Imagem_evento?.[0]?.url ||
+        "/imagens/evento-padrao.jpg",
+    }));
+
+    return sendJson(res, 200, eventos);
+  } catch (erro) {
+    console.error("Erro ao buscar todos os eventos:", erro);
+    return sendJson(res, 500, { error: erro.message });
+  }
+}
 
     // ============================================================
     // 📝 EVENTO-DETALHE — detalhe individual
