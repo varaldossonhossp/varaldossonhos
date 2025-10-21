@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eventos | Fantástica Fábrica de Sonhos 💙</title>
+
+  <!-- Fonte e estilo principal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/header-footer.css" />
+  <link rel="stylesheet" href="css/eventos.css" />
+</head>
+
+<body>
+  <!-- Cabeçalho dinâmico -->
+  <div id="header-container"></div>
+
+  <main>
+    <section class="eventos-hero">
+      <div class="container">
+        <h1 class="titulo-pagina">✨ Eventos Solidários</h1>
+        <p class="subtitulo">
+          Acompanhe as próximas ações e participe da transformação de sonhos!
+        </p>
+      </div>
+    </section>
+
+    <section class="eventos-lista" id="listaEventos">
+      <div class="container">
+        <p class="carregando">Carregando eventos...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Rodapé dinâmico -->
+  <div id="footer-container"></div>
+
+  <!-- Assistente Cloudinho -->
+  <button id="cloudinhoBtn" class="cloudinho-button" aria-label="Abrir assistente Cloudinho">
+    <img src="./imagens/cloudinho.png" alt="Cloudinho - mascote da plataforma" />
+  </button>
+
+  <div class="cloudinho-bubble" id="cloudinhoBubble" aria-hidden="true">
+    <p id="cloudinhoText">Oi! Eu sou o Cloudinho ☁️ Quer saber mais sobre os próximos eventos?</p>
+    <div class="bubble-actions">
+      <button class="btn btn-soft" data-action="home">🏠 Ir para a Home</button>
+      <button class="btn btn-outline" data-action="contato">💬 Falar com a equipe</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/eventos.js"></script>
+  <script type="module" src="js/cloudinho.js"></script>
+</body>
+</html>

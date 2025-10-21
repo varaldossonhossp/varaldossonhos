@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Varal Virtual 💙</title>
+
+  <!-- ============================================================
+       🎨 ESTILOS GERAIS DO SITE
+       ============================================================ -->
+  <!-- CSS global -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- CSS específico desta página -->
+  <link rel="stylesheet" href="css/cartinhas.css" />
+
+  <!-- Estilos e animações do assistente Cloudinho -->
+  <link rel="stylesheet" href="css/cloudinho.css" />
+</head>
+
+<body>
+  <!-- ============================================================
+       🔝 CABEÇALHO DINÂMICO
+       Importado automaticamente pelo arquivo componentes.js
+       ============================================================ -->
+  <div id="header"></div>
+
+  <!-- ============================================================
+       💌 CONTEÚDO PRINCIPAL
+       ============================================================ -->
+  <main class="container" style="padding-top: 100px; padding-bottom: 120px;">
+    <section class="varal-section">
+      
+      <!-- Topo do Varal -->
+      <div class="topo-varal">
+        <img 
+          src="imagens/logo_varal.png" 
+          alt="Logotipo do Varal Virtual" 
+          class="logo-varal" 
+          onerror="this.style.display='none'"
+        >
+
+        <h1 class="titulo-varal">Varal Virtual</h1>
+        <p class="sub-varal">
+          ✨ Aqui você encontra cartinhas escritas por crianças cheias de sonhos. ✨
+        </p>
+        <p class="hint-varal">
+          Arraste para o lado e escolha uma cartinha 💌
+        </p>
+
+        <!-- Linha decorativa do varal -->
+        <div class="linha-varal" aria-hidden="true"></div>
+      </div>
+
+      <!-- Carrossel de cartinhas -->
+      <div class="carrossel-container">
+        <button id="prevBtn" class="seta" aria-label="Anterior">❮</button>
+        <div id="cartinhasContainer" class="cartinhas-lista" role="list"></div>
+        <button id="nextBtn" class="seta" aria-label="Próximo">❯</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       🔚 RODAPÉ DINÂMICO
+       Importado automaticamente pelo arquivo componentes.js
+       ============================================================ -->
+  <div id="footer"></div>
+
+  <!-- ============================================================
+       🔍 MODAL DE ZOOM DA CARTA
+       ============================================================ -->
+  <div id="zoomModal" class="zoom-modal" aria-hidden="true">
+    <div class="zoom-backdrop" id="zoomBackdrop"></div>
+
+    <figure class="zoom-figure">
+      <img id="zoomImg" src="" alt="Cartinha selecionada" />
+      <figcaption id="zoomCaption"></figcaption>
+      <button id="zoomClose" class="zoom-close" aria-label="Fechar">✕</button>
+    </figure>
+  </div>
+
+  <!-- ============================================================
+       ⚙️ SCRIPTS
+       ============================================================ -->
+  <!-- Componentes (cabeçalho e rodapé) -->
+  <script src="js/componentes.js" defer></script>
+
+  <!-- Lógica e interação das cartinhas -->
+  <script src="js/cartinhas.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Detalhes do Evento | Varal dos Sonhos 💙</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/header-footer.css" />
+  <link rel="stylesheet" href="css/evento-detalhe.css" />
+</head>
+
+<body>
+  <!-- Cabeçalho -->
+  <div id="header-container"></div>
+
+  <main>
+    <section class="evento-detalhe" id="eventoDetalhe">
+      <div class="container">
+        <p class="carregando">Carregando detalhes do evento...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Rodapé -->
+  <div id="footer-container"></div>
+
+  <!-- Cloudinho -->
+  <button id="cloudinhoBtn" class="cloudinho-button" aria-label="Abrir assistente Cloudinho">
+    <img src="./imagens/cloudinho.png" alt="Cloudinho" />
+  </button>
+
+  <div class="cloudinho-bubble" id="cloudinhoBubble" aria-hidden="true">
+    <p id="cloudinhoText">Quer participar deste evento? ☁️</p>
+    <div class="bubble-actions">
+      <button class="btn btn-soft" id="btnContato">💬 Falar com a equipe</button>
+      <button class="btn btn-outline" id="btnEventos">📅 Ver outros eventos</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/evento-detalhe.js"></script>
+  <script type="module" src="js/cloudinho.js"></script>
+</body>
+</html>

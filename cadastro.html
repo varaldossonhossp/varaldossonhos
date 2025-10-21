@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cadastro | Varal dos Sonhos 💙</title>
+
+  <!-- Estilos globais -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- 🔝 Cabeçalho dinâmico -->
+  <div id="header"></div>
+
+  <!-- 🧾 Formulário de Cadastro -->
+  <main class="container form-container">
+    <section class="form-section card">
+      <h2>💙 Crie sua conta</h2>
+      <p>Cadastre-se para participar da Fantástica Fábrica de Sonhos!</p>
+
+      <form id="formCadastro">
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" name="nome" placeholder="Digite seu nome completo" required>
+
+        <label for="cep">CEP</label>
+        <input type="text" id="cep" name="cep" placeholder="Digite seu CEP" maxlength="9" onblur="buscarEnderecoPorCEP()" required>
+
+        <label for="endereco">Endereço</label>
+        <input type="text" id="endereco" name="endereco" placeholder="Rua, número, complemento" required>
+
+        <label for="cidade">Cidade</label>
+        <input type="text" id="cidade" name="cidade" placeholder="Cidade" required>
+
+        <label for="email">E-mail</label>
+        <input type="email" id="email" name="email" placeholder="Digite seu e-mail" required>
+
+        <label for="telefone">Telefone</label>
+        <input type="tel" id="telefone" name="telefone" placeholder="Digite seu telefone" required>
+
+        <label for="tipo_usuario">Tipo de Usuário</label>
+        <select id="tipo_usuario" name="tipo_usuario" required>
+          <option value="">Selecione...</option>
+          <option value="doador">🎁 Doador</option>
+          <option value="voluntario">🤝 Voluntário</option>
+          <option value="administrador">🛠️ Administrador Geral</option>
+        </select>
+
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" name="senha" placeholder="Crie uma senha" required>
+
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+      </form>
+
+      <p class="text-center">Já possui conta? <a href="login.html">Entrar</a></p>
+    </section>
+  </main>
+
+  <!-- 🔚 Rodapé dinâmico -->
+  <div id="footer"></div>
+
+  <!-- 🔍 Busca de endereço via CEP -->
+  <script>
+  async function buscarEnderecoPorCEP() {
+    const cep = document.getElementById('cep').value.replace(/\D/g, '');
+    if (cep.length !== 8) return alert('CEP inválido. Digite 8 números.');
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const d = await r.json();
+      if (d.erro) return alert('CEP não encontrado.');
+      document.getElementById('endereco').value = `${d.logradouro || ''}, ${d.bairro || ''}`;
+      document.getElementById('cidade').value = d.localidade || '';
+    } catch {
+      alert('Erro ao buscar endereço.');
+    }
+  }
+  </script>
+
+  <!-- Scripts globais -->
+  <script type="module" src="js/componentes.js"></script>
+  <script src="js/cadastro.js"></script>
+</body>
+</html>
