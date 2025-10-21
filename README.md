@@ -1,2 +1,2 @@
 Varal dos Sonhos
-fabrica dos sonhos
+fabrica dos sonhos 2.0
