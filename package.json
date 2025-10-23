@@ -7,13 +7,24 @@
     "node": "20.x"
   },
   "scripts": {
+    "dev": "vercel dev",
     "start": "node api/index.js",
-    "dev": "vercel dev"
+    "build": "echo 'Build executado pelo Vercel (static + serverless)'"
   },
   "dependencies": {
     "airtable": "^0.12.2",
     "dotenv": "^16.4.5",
-    "emailjs": "^4.0.3",
-    "emailjs-com": "^3.2.0"
-  }
+    "@emailjs/browser": "^4.4.1"
+  },
+  "keywords": [
+    "doações",
+    "cartinhas",
+    "solidariedade",
+    "airtable",
+    "emailjs",
+    "vercel",
+    "nodejs"
+  ],
+  "author": "Carina Mendes Dev",
+  "license": "MIT"
 }

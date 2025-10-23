@@ -1,47 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "**/*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "css/**/*",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "js/**/*",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "imagens/**/*",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "componentes/**/*",
-      "use": "@vercel/static"
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs20.x"
     }
-  ],
+  },
   "routes": [
-    {
-      "src": "^/api/(.*)$",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-    "env": {
-      "AIRTABLE_API_KEY": "AIRTABLE_API_KEY",
-      "AIRTABLE_BASE_ID": "AIRTABLE_BASE_ID",
-      "EMAILJS_USER_ID": "EMAILJS_USER_ID",
-      "EMAILJS_SERVICE_ID": "EMAILJS_SERVICE_ID",
-      "EMAILJS_TEMPLATE_ID": "EMAILJS_TEMPLATE_ID"
-    }
-
+    { "src": "^/api/(.*)$", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
 }
