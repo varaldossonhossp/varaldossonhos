@@ -10,6 +10,8 @@
 //   • GET  /api/pontosdecoleta
 //   • POST /api/login
 //   • POST /api/cadastro
+//   • POST /api/adocoes
+//   • POST /api/cloudinho
 // ============================================================
 
 import Airtable from "airtable";
@@ -89,9 +91,9 @@ export default async function handler(req, res) {
     // 💌 /api/cartinhas
     // ============================================================
     if (pathname === "/api/cartinhas" && method === "GET") {
-      const records = await base("cartinhas").select({
-        sort: [{ field: "nome_crianca", direction: "asc" }],
-      }).all();
+      const records = await base("cartinhas")
+        .select({ sort: [{ field: "nome_crianca", direction: "asc" }] })
+        .all();
 
       const cartinhas = records.map((r) => ({
         id: r.id,
@@ -108,9 +110,9 @@ export default async function handler(req, res) {
     // 📍 /api/pontosdecoleta
     // ============================================================
     if (pathname === "/api/pontosdecoleta" && method === "GET") {
-      const records = await base("pontosdecoleta").select({
-        sort: [{ field: "nome_local", direction: "asc" }],
-      }).all();
+      const records = await base("pontosdecoleta")
+        .select({ sort: [{ field: "nome_local", direction: "asc" }] })
+        .all();
 
       const pontos = records.map((r) => ({
         id: r.id,
@@ -133,10 +135,12 @@ export default async function handler(req, res) {
       if (!email || !senha)
         return sendJson(res, 400, { erro: "E-mail e senha obrigatórios." });
 
-      const records = await base("usuario").select({
-        filterByFormula: `AND({email}='${email}', {senha}='${senha}', {status}='ativo')`,
-        maxRecords: 1,
-      }).all();
+      const records = await base("usuario")
+        .select({
+          filterByFormula: `AND({email}='${email}', {senha}='${senha}', {status}='ativo')`,
+          maxRecords: 1,
+        })
+        .all();
 
       if (records.length === 0)
         return sendJson(res, 401, { erro: "Credenciais inválidas ou usuário inativo." });
@@ -172,6 +176,56 @@ export default async function handler(req, res) {
       });
 
       return sendJson(res, 201, { ok: true, id: novo.id });
+    }
+
+    // ============================================================
+    // 🎁 /api/adocoes — registrar adoção
+    // ============================================================
+    if (pathname === "/api/adocoes" && method === "POST") {
+      const dados = await getBody(req);
+      const { id_cartinha, nome_crianca, usuario, email } = dados;
+
+      if (!id_cartinha || !usuario)
+        return sendJson(res, 400, { erro: "Dados incompletos para adoção." });
+
+      const novo = await base("doacoes").create({
+        id_cartinha,
+        nome_crianca,
+        usuario,
+        email,
+        data_adocao: new Date().toISOString().split("T")[0],
+        status: "confirmada",
+      });
+
+      return sendJson(res, 201, { ok: true, id: novo.id });
+    }
+
+    // ============================================================
+    // ☁️ /api/cloudinho — assistente virtual
+    // ============================================================
+    if (pathname === "/api/cloudinho" && method === "POST") {
+      const { pergunta } = await getBody(req);
+      if (!pergunta) return sendJson(res, 400, { erro: "Pergunta não informada." });
+
+      const registros = await base("cloudinho_kb")
+        .select({ fields: ["pergunta", "palavras_chave", "resposta"], maxRecords: 50 })
+        .all();
+
+      const perguntaLower = pergunta.toLowerCase();
+      let respostaEncontrada = null;
+
+      for (const r of registros) {
+        const palavras = (r.fields.palavras_chave || []).map((p) => p.toLowerCase());
+        if (palavras.some((p) => perguntaLower.includes(p))) {
+          respostaEncontrada = r.fields.resposta;
+          break;
+        }
+      }
+
+      if (respostaEncontrada)
+        return sendJson(res, 200, { resposta: respostaEncontrada });
+      else
+        return sendJson(res, 200, { resposta: "Desculpe, ainda não sei responder isso 💭." });
     }
 
     // ============================================================
