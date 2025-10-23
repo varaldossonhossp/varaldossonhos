@@ -107,24 +107,30 @@ export default async function handler(req, res) {
     }
 
     // ============================================================
-    // 📍 /api/pontosdecoleta
+    // 📍 /api/pontosdecoleta — atualizado
     // ============================================================
     if (pathname === "/api/pontosdecoleta" && method === "GET") {
-      const records = await base("pontosdecoleta")
-        .select({ sort: [{ field: "nome_local", direction: "asc" }] })
-        .all();
+      try {
+        const records = await base("pontosdecoleta")
+          .select({ sort: [{ field: "nome_local", direction: "asc" }] })
+          .all();
 
-      const pontos = records.map((r) => ({
-        id: r.id,
-        nome: r.fields.nome_local,
-        endereco: r.fields.endereco,
-        telefone: r.fields.telefone,
-        email: r.fields.email,
-        horario_funcionamento: r.fields.horario_funcionamento,
-        responsavel: r.fields.responsavel,
-      }));
+        const pontos = records.map((r) => ({
+          id: r.id,
+          nome_local: r.fields.nome_local || "Ponto sem nome",
+          endereco: r.fields.endereco || "Endereço não informado",
+          cidade: r.fields.cidade || "",
+          telefone: r.fields.telefone || "",
+          email: r.fields.email || "",
+          horario_funcionamento: r.fields.horario_funcionamento || "",
+          responsavel: r.fields.responsavel || "",
+        }));
 
-      return sendJson(res, 200, pontos);
+        return sendJson(res, 200, pontos);
+      } catch (erro) {
+        console.error("❌ Erro ao buscar pontos de coleta:", erro);
+        return sendJson(res, 500, { erro: "Falha ao buscar pontos de coleta" });
+      }
     }
 
     // ============================================================
@@ -178,46 +184,41 @@ export default async function handler(req, res) {
       return sendJson(res, 201, { ok: true, id: novo.id });
     }
 
-// ============================================================
-// 💙 /api/adocoes — Registrar adoção e criar registro no Airtable
-// ============================================================
-if (pathname === "/api/adocoes" && method === "POST") {
-  const { id_cartinha, nome_crianca, usuario, email, ponto_coleta } = await getBody(req);
+    // ============================================================
+    // 💙 /api/adocoes — Registrar adoção
+    // ============================================================
+    if (pathname === "/api/adocoes" && method === "POST") {
+      const { id_cartinha, nome_crianca, usuario, email, ponto_coleta } = await getBody(req);
 
-  if (!id_cartinha || !usuario || !email)
-    return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
+      if (!id_cartinha || !usuario || !email)
+        return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
 
-  try {
-    // ✅ 1. Cria o registro na tabela 'doacoes'
-    const novaDoacao = await base("doacoes").create({
-      "doador": usuario,
-      "cartinha": id_cartinha, // ⚠️ texto simples, não link
-      "ponto_coleta": ponto_coleta || "Ponto Central",
-      "dados.doacao": new Date().toISOString().split("T")[0],
-      "status.doacao": "aguardando_confirmação",
-      "mensagem.confirmacao": `💌 Adoção registrada para ${nome_crianca}. Aguarde o e-mail de confirmação.`,
-    });
+      try {
+        // ✅ Cria registro na tabela 'doacoes'
+        const novaDoacao = await base("doacoes").create({
+          doador: usuario,
+          cartinha: id_cartinha,
+          ponto_coleta: ponto_coleta || "Ponto Central",
+          dados_doacao: new Date().toISOString().split("T")[0],
+          status_doacao: "aguardando_confirmação",
+          mensagem_confirmacao: `💌 Adoção registrada para ${nome_crianca}. Aguarde o e-mail de confirmação.`,
+        });
 
-    // ✅ 2. Atualiza a cartinha como “adotada”
-    await base("cartinhas").update([
-      {
-        id: id_cartinha,
-        fields: { "status": "adotada" }
+        // ✅ Atualiza status da cartinha
+        await base("cartinhas").update([
+          { id: id_cartinha, fields: { status: "adotada" } },
+        ]);
+
+        return sendJson(res, 201, {
+          ok: true,
+          id: novaDoacao.id,
+          mensagem: "Cartinha adicionada ao carrinho com sucesso!",
+        });
+      } catch (erro) {
+        console.error("❌ Erro ao registrar adoção:", erro);
+        return sendJson(res, 500, { erro: erro.message || String(erro) });
       }
-    ]);
-
-    return sendJson(res, 201, {
-      ok: true,
-      id: novaDoacao.id,
-      mensagem: "Cartinha adicionada ao carrinho com sucesso!"
-    });
-
-  } catch (erro) {
-    console.error("❌ Erro ao registrar adoção:", erro);
-    return sendJson(res, 500, { erro: erro.message || String(erro) });
-  }
-}
-
+    }
 
     // ============================================================
     // ☁️ /api/cloudinho — assistente virtual
