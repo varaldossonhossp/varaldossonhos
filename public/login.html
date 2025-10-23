@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login | Varal dos Sonhos 💙</title>
+
+  <link rel="stylesheet" href="/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/cloudinho.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- Centralização e responsividade --- */
+    .form-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+      min-height: 80vh;
+    }
+
+    .form-section.card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .form-section h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      color: #1E3A8A;
+    }
+
+    .form-section p {
+      text-align: center;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d0d7e2;
+      font-family: 'Poppins', sans-serif;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+      outline: none;
+    }
+
+    button.btn-primary {
+      width: 100%;
+      background-color: #1e3a8a;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button.btn-primary:hover {
+      background-color: #2563eb;
+    }
+
+    .mensagem {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .form-section.card {
+        padding: 1.5rem;
+        max-width: 90%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Cabeçalho -->
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html"><span class="brand-badge">Varal Virtual</span></a>
+      <nav class="menu">
+        <a class="menu-link" href="index.html">Início</a>
+        <a class="menu-link" href="cartinhas.html">Varal Virtual</a>
+        <a class="menu-link" href="pontos-de-coleta.html">Pontos de Coleta</a>
+        <a class="btn btn-outline" href="cadastro.html">Cadastre-se</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="header-spacer" aria-hidden="true"></div>
+
+  <!-- Formulário -->
+  <main class="container form-container">
+    <section class="form-section card">
+      <h2>💙 Entrar</h2>
+      <p>Faça login para continuar</p>
+
+      <input type="email" id="email" placeholder="Digite seu e-mail" required>
+      <input type="password" id="senha" placeholder="Digite sua senha" required>
+      <button id="btnLogin" class="btn btn-primary">Entrar</button>
+
+      <p class="text-center">Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+      <div class="mensagem" id="mensagem"></div>
+    </section>
+  </main>
+
+  <!-- Rodapé -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <span>© 2025 Varal dos Sonhos</span>
+      <span>Desenvolvido com amor 💙</span>
+    </div>
+  </footer>
+
+  <script type="module" src="/public/js/componentes.js" defer></script>
+  <script type="module" src="/public/js/login.js" defer></script>
+  <script src="/public/js/cloudinho.js" defer></script>
+  
+</body>
+</html>

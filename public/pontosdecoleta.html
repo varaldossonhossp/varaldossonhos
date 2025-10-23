@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- ============================================================
+       💙 VARAL DOS SONHOS — Pontos de Coleta (versão dinâmica)
+       ------------------------------------------------------------
+       - Carrega header, footer e Cloudinho via componentes.js
+       - Exibe cards "pendurados" no varal com pregadores
+       - Mostra mapa via Google Maps (modal embutido)
+       - 100% compatível com: Airtable, Vercel, .NET MAUI e EmailJS
+  ============================================================ -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Locais oficiais de coleta da Fantástica Fábrica de Sonhos." />
+  <title>Pontos de Coleta | Fantástica Fábrica de Sonhos</title>
+
+  <!-- 🎨 Estilos globais -->
+  <link rel="stylesheet" href="/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/cloudinho.css">
+  <link rel="stylesheet" href="/public/css/pontosdecoleta.css" />
+  <link rel="icon" href="imagens/favicon.png" type="image/png" />
+</head>
+
+<body>
+  <!-- ============================================================
+       🔝 Cabeçalho dinâmico (importado via componentes.js)
+  ============================================================ -->
+  <div id="header"></div>
+
+  <!-- ============================================================
+       🌤️ Seção principal — Varal dos pontos de coleta
+  ============================================================ -->
+  <main>
+    <section class="hero-coleta">
+      <div class="container">
+        <!-- Logo principal -->
+        <img src="imagens/logo-sem-fundo.png"
+             alt="Fantástica Fábrica de Sonhos"
+             class="logo-coleta" />
+
+        <h2 class="titulo-coleta">Pontos de Coleta</h2>
+
+        <!-- Linha do varal -->
+        <div class="corda-varal" aria-hidden="true"></div>
+
+        <!-- Cards dinâmicos vindos do Airtable -->
+        <div id="cardsContainer" class="cards-grid" aria-live="polite">
+          <div class="placeholder">Carregando pontos...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       🔚 Rodapé dinâmico
+  ============================================================ -->
+  <div id="footer"></div>
+
+  <!-- ============================================================
+       ☁️ Cloudinho (carregado dinamicamente via componentes.js)
+  ============================================================ -->
+  <div id="cloudinho"></div>
+
+  <!-- ============================================================
+       🗺️ Modal de mapa (Google Maps Embed)
+  ============================================================ -->
+  <div id="mapModal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-label="Mapa">
+      <button id="closeModal" class="close" aria-label="Fechar mapa">×</button>
+      <iframe id="mapFrame" width="100%" height="450" style="border:0;" loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       📜 Scripts
+  ============================================================ -->
+  <script type="module" src="/public/js/componentes.js" defer></script>
+  <script type="module" src="/public/js/pontosdecoleta.js" defer></script>
+  <script src="/public/js/cloudinho.js" defer></script>
+</body>
+</html>

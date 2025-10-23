@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carrinho | Varal dos Sonhos</title>
+
+  <!-- global style -->
+  <link rel="stylesheet" href="/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/cloudinho.css">
+</head>
+<body>
+
+  <!-- cabeçalho dinâmico (componentes.js) -->
+  <div id="header"></div>
+
+  <main class="container" style="padding-top:120px; padding-bottom:100px;">
+    <section class="carrinho-section card">
+      <h1>Meu Carrinho</h1>
+      <p class="sub">Revise as cartinhas escolhidas e selecione um ponto de coleta para finalizar a adoção.</p>
+
+      <!-- Lista de itens do carrinho -->
+      <div id="carrinhoLista" class="carrinho-lista" aria-live="polite"></div>
+
+      <!-- Seleção de ponto de coleta -->
+      <div class="pontos-box">
+        <h2>Escolha o ponto de coleta</h2>
+        <div id="pontosPlaceholder" class="placeholder">Carregando pontos de coleta…</div>
+
+        <div id="pontosControls" class="pontos-controls hidden">
+          <select id="selectPontos" aria-label="Selecione um ponto de coleta">
+            <option value="">-- Selecione um ponto de coleta --</option>
+          </select>
+
+          <button id="verNoMapa" class="btn-outline" type="button" disabled>Ver no mapa</button>
+          <div class="obs">É obrigatório selecionar um ponto para finalizar.</div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="acoes">
+        <button id="btnLimpar" class="btn btn-outline">🗑️ Limpar Carrinho</button>
+        <button id="btnConfirmar" class="btn btn-primary" disabled>✅ Confirmar Adoção</button>
+      </div>
+
+      <!-- pequeno alerta/feedback -->
+      <div id="feedback" class="feedback hidden"></div>
+    </section>
+  </main>
+
+  <!-- Modal / iframe do Google Maps -->
+  <div id="mapModal" class="map-modal" aria-hidden="true">
+    <div class="map-backdrop" id="mapBackdrop"></div>
+    <div class="map-frame">
+      <button id="closeMap" class="map-close" aria-label="Fechar">✕</button>
+      <iframe id="mapFrame" src="about:blank" frameborder="0" allowfullscreen></iframe>
+      <div id="mapCaption" class="map-caption"></div>
+    </div>
+  </div>
+
+  <!-- rodapé dinâmico -->
+  <div id="footer"></div>
+
+  <!-- scripts -->
+  
+  <script type="module" src="/public/js/carrinho.js" defer></script>
+  <script type="module" src="/public/js/componentes.js" defer></script>
+  <script type="module" src="/public/js/pontosdecoleta.js" defer></script>
+  <script type="module" src="/public/js/cloudinho.js" defer></script>
+</body>
+</html>
