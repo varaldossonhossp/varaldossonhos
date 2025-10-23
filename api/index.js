@@ -1,20 +1,19 @@
 // ============================================================
-// 💙 VARAL DOS SONHOS — /api/index.js
+// 💙 VARAL DOS SONHOS — /api/index.js (versão 2025)
 // ------------------------------------------------------------
-// API ÚNICA (para plano gratuito Vercel)
-// Reúne todas as rotas:
+// API única compatível com plano gratuito Vercel
+// Rotas incluídas:
 //   • /api/health
 //   • /api/eventos
 //   • /api/cartinhas
+//   • /api/pontosdecoleta
 // ============================================================
 
 import Airtable from "airtable";
-
-// 🔧 Força execução como função Node.js
 export const config = { runtime: "nodejs" };
 
 // ============================================================
-// 🧰 Funções utilitárias
+// 🧰 Funções auxiliares
 // ============================================================
 function sendJson(res, status, data) {
   res.statusCode = status;
@@ -54,7 +53,6 @@ function firstImageUrl(fields, keys) {
 // 🌈 HANDLER PRINCIPAL
 // ============================================================
 export default async function handler(req, res) {
-  // Pré-flight CORS
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -79,16 +77,12 @@ export default async function handler(req, res) {
   }
 
   // ============================================================
-  // 🔑 Conexão com o Airtable
+  // 🔑 Conexão com Airtable
   // ============================================================
   const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
     return sendJson(res, 500, {
       erro: "⚠️ Variáveis Airtable ausentes no ambiente.",
-      faltando: {
-        AIRTABLE_API_KEY: !!AIRTABLE_API_KEY,
-        AIRTABLE_BASE_ID: !!AIRTABLE_BASE_ID,
-      },
     });
   }
 
@@ -109,7 +103,7 @@ export default async function handler(req, res) {
         })
         .all();
 
-      const eventos = (records || []).map((r) => ({
+      const eventos = records.map((r) => ({
         id: r.id,
         nome: r.fields.nome_evento || r.fields.nome || "Evento sem nome",
         data_inicio: r.fields.data_inicio || "",
@@ -126,7 +120,7 @@ export default async function handler(req, res) {
     }
 
     // ============================================================
-    // 💌 /api/cartinhas — lista de cartinhas disponíveis
+    // 💌 /api/cartinhas — lista de cartinhas
     // ============================================================
     if (pathname === "/api/cartinhas" && method === "GET") {
       const tabelaCartinhas =
@@ -142,14 +136,6 @@ export default async function handler(req, res) {
       if (!tabelaCartinhas) {
         return sendJson(res, 500, {
           erro: "Tabela de cartinhas não encontrada no Airtable.",
-          tente: [
-            "cartinhas",
-            "Cartinhas",
-            "Cartas",
-            "Varal",
-            "Varal Virtual",
-            "varal",
-          ],
         });
       }
 
@@ -157,7 +143,7 @@ export default async function handler(req, res) {
         .select({ sort: [{ field: "nome", direction: "asc" }], maxRecords: 100 })
         .all();
 
-      const cartinhas = (records || []).map((r) => ({
+      const cartinhas = records.map((r) => ({
         id: r.id,
         nome: r.fields.nome || r.fields.crianca || "Criança",
         idade: r.fields.idade || "",
@@ -169,11 +155,51 @@ export default async function handler(req, res) {
             "anexo",
             "imagem_carta",
             "scan",
-            "arquivo",
           ]) || "/imagens/cartinha-padrao.png",
       }));
 
       return sendJson(res, 200, cartinhas);
+    }
+
+    // ============================================================
+    // 📍 /api/pontosdecoleta — locais de coleta
+    // ============================================================
+    if (pathname === "/api/pontosdecoleta" && method === "GET") {
+      const tabelaPontos =
+        (await findTable(base, [
+          "pontosdecoleta",
+          "Pontos de Coleta",
+          "pontos",
+          "Locais de Coleta",
+        ])) || null;
+
+      if (!tabelaPontos) {
+        return sendJson(res, 500, {
+          erro: "Tabela de pontos de coleta não encontrada no Airtable.",
+        });
+      }
+
+      const records = await base(tabelaPontos)
+        .select({ sort: [{ field: "nome", direction: "asc" }] })
+        .all();
+
+      const pontos = records.map((r) => ({
+        id: r.id,
+        nome: r.fields.nome || r.fields.local || "Ponto de Coleta",
+        endereco: r.fields.endereco || "",
+        cidade: r.fields.cidade || "",
+        estado: r.fields.estado || "",
+        contato: r.fields.contato || "",
+        imagem:
+          firstImageUrl(r.fields, [
+            "imagem",
+            "foto",
+            "anexo",
+            "imagem_ponto",
+          ]) || "/imagens/ponto-padrao.jpg",
+      }));
+
+      return sendJson(res, 200, pontos);
     }
 
     // ============================================================
@@ -184,9 +210,7 @@ export default async function handler(req, res) {
     console.error("❌ Erro interno:", erro);
     return sendJson(res, 500, {
       erro: "Erro interno no servidor.",
-      detalhe: erro?.message || String(erro),
-      dica:
-        "Verifique o nome da tabela e dos campos no Airtable (cartinhas/eventos).",
+      detalhe: erro.message || String(erro),
     });
   }
 }
