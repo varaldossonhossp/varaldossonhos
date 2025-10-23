@@ -1,10 +1,10 @@
 // ============================================================
 // 🛒 VARAL DOS SONHOS — carrinho.js (versão final 2025)
 // ------------------------------------------------------------
-// - Exibe cartinhas do carrinho (localStorage)
-// - Escolha de ponto de coleta (API /api/pontosdecoleta)
-// - Confirma adoção via /api/adocoes (backend envia o e-mail)
-// - Animação do Cloudinho ao sucesso 💙
+// - Exibe as cartinhas do carrinho (localStorage)
+// - Carrega pontos de coleta (API /api/pontosdecoleta)
+// - Confirma adoção via /api/adocoes + EmailJS
+// - Cloudinho animado e logs de depuração
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -14,9 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnVoltar = document.getElementById("btnVoltar");
   const selectPontos = document.getElementById("selectPontos");
   const pontosPlaceholder = document.getElementById("pontosPlaceholder");
-  const pontosControls = document.getElementById("pontosControls");
   const verNoMapa = document.getElementById("verNoMapa");
 
+  // 🔹 Verifica se usuário está logado
   const usuario = JSON.parse(localStorage.getItem("usuario"));
   if (!usuario) {
     alert("⚠️ Faça login antes de acessar o carrinho!");
@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // 🔹 Carrega carrinho salvo
   let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 
   // ============================================================
@@ -50,8 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       carrinhoLista.appendChild(div);
     });
-
-    btnConfirmar.disabled = carrinho.length === 0 || !selectPontos.value;
   }
 
   // ============================================================
@@ -63,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
       carrinho.splice(idx, 1);
       localStorage.setItem("carrinho", JSON.stringify(carrinho));
       renderCarrinho();
+      verificarBotaoConfirmar();
     }
   });
 
@@ -74,6 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       carrinho = [];
       localStorage.removeItem("carrinho");
       renderCarrinho();
+      verificarBotaoConfirmar();
     }
   });
 
@@ -81,13 +82,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // 📍 Carregar pontos de coleta
   // ============================================================
   async function carregarPontos() {
-    pontosPlaceholder.classList.remove("hidden");
-    pontosControls.classList.add("hidden");
+    pontosPlaceholder.textContent = "Carregando pontos de coleta...";
+    selectPontos.innerHTML = "";
 
     try {
       const baseURL = window.location.hostname.includes("vercel.app")
         ? ""
-        : "https://varaldossonhos-sp.vercel.app";
+        : "https://varaldossonhos.vercel.app";
 
       const resp = await fetch(`${baseURL}/api/pontosdecoleta`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -98,25 +99,47 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      selectPontos.innerHTML = '<option value="">-- Selecione um ponto de coleta --</option>';
+      selectPontos.innerHTML =
+        '<option value="">-- Selecione um ponto de coleta --</option>';
       pontos.forEach((p) => {
         const opt = document.createElement("option");
         opt.value = JSON.stringify({
           nome: p.nome_local || p.nome,
           endereco: p.endereco || "",
-          telefone: p.telefone || ""
+          telefone: p.telefone || "",
         });
         opt.textContent = `${p.nome_local || p.nome} — ${p.endereco || ""}`;
         selectPontos.appendChild(opt);
       });
 
-      pontosPlaceholder.classList.add("hidden");
-      pontosControls.classList.remove("hidden");
+      pontosPlaceholder.textContent = "";
     } catch (err) {
       console.error("❌ Erro ao buscar pontos de coleta:", err);
-      pontosPlaceholder.textContent = "Erro ao carregar pontos.";
+      pontosPlaceholder.textContent = "Erro ao carregar pontos de coleta.";
     }
   }
+
+  // ============================================================
+  // 🧩 Habilita botão Confirmar ao escolher ponto
+  // ============================================================
+  function verificarBotaoConfirmar() {
+    const temPonto = !!selectPontos.value;
+    const temCartinha = carrinho.length > 0;
+
+    if (temPonto && temCartinha) {
+      btnConfirmar.disabled = false;
+      btnConfirmar.classList.remove("disabled");
+      btnConfirmar.style.opacity = "1";
+      btnConfirmar.style.cursor = "pointer";
+    } else {
+      btnConfirmar.disabled = true;
+      btnConfirmar.classList.add("disabled");
+      btnConfirmar.style.opacity = "0.6";
+      btnConfirmar.style.cursor = "not-allowed";
+    }
+  }
+
+  selectPontos.addEventListener("change", verificarBotaoConfirmar);
 
   // ============================================================
   // 🗺️ Ver no mapa
@@ -125,29 +148,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const val = selectPontos.value;
     if (!val) return alert("Selecione um ponto de coleta primeiro.");
     const ponto = JSON.parse(val);
-    window.open(`https://www.google.com/maps/search/${encodeURIComponent(ponto.endereco)}`, "_blank");
+    window.open(
+      `https://www.google.com/maps/search/${encodeURIComponent(ponto.endereco)}`,
+      "_blank"
+    );
   });
 
   // ============================================================
-  // 💌 Confirmar adoção (backend envia o e-mail)
+  // 💌 Confirmar adoção
   // ============================================================
   btnConfirmar.addEventListener("click", async () => {
-    if (!selectPontos.value) {
+    const pontoSelecionado = selectPontos.value
+      ? JSON.parse(selectPontos.value)
+      : null;
+
+    if (!pontoSelecionado) {
       alert("Por favor, selecione um ponto de coleta.");
       return;
     }
 
-    const ponto = JSON.parse(selectPontos.value);
     btnConfirmar.disabled = true;
     btnConfirmar.textContent = "Enviando...";
 
     try {
       const baseURL = window.location.hostname.includes("vercel.app")
         ? ""
-        : "https://varaldossonhos-sp.vercel.app";
+        : "https://varaldossonhos.vercel.app";
+
+      const dataLimite = new Date();
+      dataLimite.setDate(dataLimite.getDate() + 10);
+      const prazo = dataLimite.toLocaleDateString("pt-BR");
 
       for (const carta of carrinho) {
-        const res = await fetch(`${baseURL}/api/adocoes`, {
+        console.log("📨 Enviando adoção para API:", carta.nome);
+
+        const resposta = await fetch(`${baseURL}/api/adocoes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -155,23 +190,35 @@ document.addEventListener("DOMContentLoaded", () => {
             nome_crianca: carta.nome,
             usuario: usuario.nome,
             email: usuario.email,
-            ponto_coleta: ponto.nome,
+            ponto_coleta: pontoSelecionado.nome,
           }),
         });
 
-        const result = await res.json();
-        console.log("📬 Retorno da API:", result);
+        const resultado = await resposta.json();
+        console.log("📬 Retorno da API:", resultado);
+
+        if (!resposta.ok) throw new Error(resultado.erro || "Falha na API");
+
+        // 💙 Envio do e-mail (via EmailJS)
+        await emailjs.send("service_uffgnhx", "template_4yfc899", {
+          to_name: usuario.nome,
+          to_email: usuario.email,
+          child_name: carta.nome,
+          child_gift: carta.sonho,
+          deadline: prazo,
+          pickup_name: pontoSelecionado.nome,
+          pickup_address: pontoSelecionado.endereco,
+        });
       }
 
       mostrarMensagemSucesso();
-      setTimeout(() => {
-        localStorage.removeItem("carrinho");
-        window.location.href = "index.html";
-      }, 5000);
+      alert("💙 Adoção confirmada! Você receberá um e-mail de confirmação.");
+      localStorage.removeItem("carrinho");
+
+      setTimeout(() => (window.location.href = "index.html"), 4000);
     } catch (erro) {
       console.error("❌ Erro ao confirmar adoção:", erro);
-      alert("Erro ao confirmar adoção. Tente novamente mais tarde.");
-    } finally {
+      alert("Erro ao confirmar adoção. Verifique o console.");
       btnConfirmar.disabled = false;
       btnConfirmar.textContent = "✅ Confirmar Adoção";
     }
@@ -180,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ============================================================
   // ☁️ Cloudinho animado de sucesso
   // ============================================================
-  window.mostrarMensagemSucesso = function () {
+  function mostrarMensagemSucesso() {
     const popup = document.createElement("div");
     popup.className = "cloudinho-popup";
     popup.innerHTML = `
@@ -188,21 +235,16 @@ document.addEventListener("DOMContentLoaded", () => {
         <img src="imagens/cloudinho.png" alt="Cloudinho" class="cloudinho-popup-img">
         <div>
           <h3>💙 Adoção Confirmada!</h3>
-          <p>Você receberá um e-mail com as instruções e a data de entrega!</p>
+          <p>Obrigado por espalhar amor e realizar sonhos!</p>
         </div>
       </div>
-      <audio id="soundSuccess" src="/public/sounds/sucesso.mp3"></audio>
     `;
     document.body.appendChild(popup);
 
-    // som suave
-    const audio = popup.querySelector("#soundSuccess");
-    if (audio) audio.play().catch(() => {});
-
     setTimeout(() => popup.classList.add("show"), 100);
-    setTimeout(() => popup.classList.remove("show"), 4500);
-    setTimeout(() => popup.remove(), 5200);
-  };
+    setTimeout(() => popup.classList.remove("show"), 3500);
+    setTimeout(() => popup.remove(), 4500);
+  }
 
   // ============================================================
   // ↩️ Adotar outra cartinha
@@ -215,5 +257,5 @@ document.addEventListener("DOMContentLoaded", () => {
   // 🚀 Inicialização
   // ============================================================
   renderCarrinho();
-  carregarPontos();
+  carregarPontos().then(() => verificarBotaoConfirmar());
 });
