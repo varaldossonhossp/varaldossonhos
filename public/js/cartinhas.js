@@ -1,7 +1,5 @@
 // ============================================================
-// 💌 VARAL DOS SONHOS — cartinhas.js
-// ------------------------------------------------------------
-// Lista e exibe as cartinhas cadastradas no Airtable.
+// 💌 cartinhas.js — carrega lista de cartinhas do Airtable
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,10 +15,21 @@ async function carregarCartinhas() {
       ? ""
       : "https://varaldossonhos.vercel.app";
 
-    const resposta = await fetch(`${baseURL}/api/cartinhas`);
-    if (!resposta.ok) throw new Error("Erro ao carregar cartinhas");
+    const resp = await fetch(`${baseURL}/api/cartinhas`, { cache: "no-store" });
 
-    const cartinhas = await resposta.json();
+    if (!resp.ok) {
+      // Lê corpo do erro para ver o motivo real
+      let erro;
+      try {
+        erro = await resp.json();
+      } catch {
+        erro = { erro: await resp.text() };
+      }
+      console.error("❌ Falha /api/cartinhas:", erro);
+      throw new Error(erro?.erro || "Erro ao carregar cartinhas");
+    }
+
+    const cartinhas = await resp.json();
     container.innerHTML = "";
 
     if (!cartinhas || cartinhas.length === 0) {
@@ -34,14 +43,14 @@ async function carregarCartinhas() {
       card.innerHTML = `
         <img src="${c.imagem}" alt="Cartinha de ${c.nome}" onerror="this.src='imagens/cartinha-padrao.png'">
         <div class="cartinha-info">
-          <h3>${c.nome}, ${c.idade}</h3>
-          <p>${c.carta}</p>
+          <h3>${c.nome}${c.idade ? `, ${c.idade}` : ""}</h3>
+          <p>${c.carta || ""}</p>
         </div>
       `;
       container.appendChild(card);
     });
-  } catch (erro) {
-    console.error("Erro ao carregar cartinhas:", erro);
+  } catch (e) {
+    console.error("Erro ao carregar cartinhas:", e);
     container.innerHTML = `<p>Erro ao carregar as cartinhas.<br>Tente novamente mais tarde.</p>`;
   }
 }

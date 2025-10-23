@@ -1,15 +1,16 @@
 // ============================================================
 // 💙 VARAL DOS SONHOS — /api/index.js
 // ------------------------------------------------------------
-// Reúne todas as rotas da aplicação:
+// API ÚNICA (para plano gratuito Vercel)
+// Reúne todas as rotas:
+//   • /api/health
 //   • /api/eventos
 //   • /api/cartinhas
-//   • /api/health
 // ============================================================
 
 import Airtable from "airtable";
 
-// 🔧 Forçar execução no runtime Node.js
+// 🔧 Força execução como função Node.js
 export const config = { runtime: "nodejs" };
 
 // ============================================================
@@ -24,11 +25,36 @@ function sendJson(res, status, data) {
   res.end(JSON.stringify(data, null, 2));
 }
 
+async function tableExists(base, name) {
+  try {
+    await base(name).select({ maxRecords: 1 }).firstPage();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function findTable(base, candidates) {
+  for (const t of candidates) {
+    if (await tableExists(base, t)) return t;
+  }
+  return null;
+}
+
+function firstImageUrl(fields, keys) {
+  for (const k of keys) {
+    const v = fields?.[k];
+    if (Array.isArray(v) && v[0]?.url) return v[0].url;
+    if (typeof v === "string" && v.startsWith("http")) return v;
+  }
+  return null;
+}
+
 // ============================================================
 // 🌈 HANDLER PRINCIPAL
 // ============================================================
 export default async function handler(req, res) {
-  // ⚙️ Suporte a CORS pré-flight
+  // Pré-flight CORS
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -57,7 +83,13 @@ export default async function handler(req, res) {
   // ============================================================
   const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-    return sendJson(res, 500, { erro: "⚠️ Variáveis Airtable ausentes no ambiente." });
+    return sendJson(res, 500, {
+      erro: "⚠️ Variáveis Airtable ausentes no ambiente.",
+      faltando: {
+        AIRTABLE_API_KEY: !!AIRTABLE_API_KEY,
+        AIRTABLE_BASE_ID: !!AIRTABLE_BASE_ID,
+      },
+    });
   }
 
   const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
@@ -67,7 +99,10 @@ export default async function handler(req, res) {
     // 🗓️ /api/eventos — eventos em destaque
     // ============================================================
     if (pathname === "/api/eventos" && method === "GET") {
-      const records = await base("eventos")
+      const tabelaEventos =
+        (await findTable(base, ["eventos", "Eventos", "EVENTOS"])) || "eventos";
+
+      const records = await base(tabelaEventos)
         .select({
           filterByFormula: "IF({destaque_home}=TRUE(), TRUE(), FALSE())",
           sort: [{ field: "data_inicio", direction: "asc" }],
@@ -80,9 +115,11 @@ export default async function handler(req, res) {
         data_inicio: r.fields.data_inicio || "",
         descricao: r.fields.descricao || "",
         imagem:
-          r.fields.imagem_evento?.[0]?.url ||
-          r.fields.Imagem_evento?.[0]?.url ||
-          "/imagens/evento-padrao.jpg",
+          firstImageUrl(r.fields, [
+            "imagem_evento",
+            "Imagem_evento",
+            "imagem",
+          ]) || "/imagens/evento-padrao.jpg",
       }));
 
       return sendJson(res, 200, eventos);
@@ -92,18 +129,48 @@ export default async function handler(req, res) {
     // 💌 /api/cartinhas — lista de cartinhas disponíveis
     // ============================================================
     if (pathname === "/api/cartinhas" && method === "GET") {
-      const records = await base("cartinhas")
-        .select({
-          sort: [{ field: "nome", direction: "asc" }],
-        })
+      const tabelaCartinhas =
+        (await findTable(base, [
+          "cartinhas",
+          "Cartinhas",
+          "Cartas",
+          "Varal",
+          "Varal Virtual",
+          "varal",
+        ])) || null;
+
+      if (!tabelaCartinhas) {
+        return sendJson(res, 500, {
+          erro: "Tabela de cartinhas não encontrada no Airtable.",
+          tente: [
+            "cartinhas",
+            "Cartinhas",
+            "Cartas",
+            "Varal",
+            "Varal Virtual",
+            "varal",
+          ],
+        });
+      }
+
+      const records = await base(tabelaCartinhas)
+        .select({ sort: [{ field: "nome", direction: "asc" }], maxRecords: 100 })
         .all();
 
       const cartinhas = (records || []).map((r) => ({
         id: r.id,
-        nome: r.fields.nome || "Criança",
+        nome: r.fields.nome || r.fields.crianca || "Criança",
         idade: r.fields.idade || "",
-        carta: r.fields.carta || r.fields.mensagem || "",
-        imagem: r.fields.imagem?.[0]?.url || "/imagens/cartinha-padrao.png",
+        carta: r.fields.carta || r.fields.mensagem || r.fields.texto || "",
+        imagem:
+          firstImageUrl(r.fields, [
+            "imagem",
+            "foto",
+            "anexo",
+            "imagem_carta",
+            "scan",
+            "arquivo",
+          ]) || "/imagens/cartinha-padrao.png",
       }));
 
       return sendJson(res, 200, cartinhas);
@@ -117,7 +184,9 @@ export default async function handler(req, res) {
     console.error("❌ Erro interno:", erro);
     return sendJson(res, 500, {
       erro: "Erro interno no servidor.",
-      detalhe: erro.message || String(erro),
+      detalhe: erro?.message || String(erro),
+      dica:
+        "Verifique o nome da tabela e dos campos no Airtable (cartinhas/eventos).",
     });
   }
 }
