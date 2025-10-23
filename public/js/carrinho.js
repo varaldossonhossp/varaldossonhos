@@ -1,9 +1,10 @@
 // ============================================================
-// 🛒 VARAL DOS SONHOS — carrinho.js (versão final)
+// 🛒 VARAL DOS SONHOS — carrinho.js (versão final com Cloudinho 2025)
 // ------------------------------------------------------------
 // - Exibe cartinhas do carrinho (localStorage)
-// - Carrega pontos de coleta da API
-// - Envia confirmação de adoção (API + EmailJS)
+// - Escolha de ponto de coleta (API /api/pontosdecoleta)
+// - Confirma adoção via /api/adocoes + EmailJS
+// - Animação de sucesso com Cloudinho 💙
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -54,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================================================
-  // 🗑️ Remover item do carrinho
+  // 🗑️ Remover item
   // ============================================================
   carrinhoLista.addEventListener("click", (e) => {
     if (e.target.classList.contains("remover")) {
@@ -66,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // 🧹 Limpar carrinho inteiro
+  // 🧹 Limpar carrinho
   // ============================================================
   btnLimpar.addEventListener("click", () => {
     if (confirm("Deseja realmente limpar o carrinho?")) {
@@ -77,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // 📍 Carregar pontos de coleta (com feedback)
+  // 📍 Carregar pontos de coleta
   // ============================================================
   async function carregarPontos() {
     pontosPlaceholder.classList.remove("hidden");
@@ -92,7 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
       const pontos = await resp.json();
-
       if (!Array.isArray(pontos) || pontos.length === 0) {
         pontosPlaceholder.textContent = "Nenhum ponto de coleta cadastrado.";
         return;
@@ -101,37 +101,46 @@ document.addEventListener("DOMContentLoaded", () => {
       selectPontos.innerHTML = '<option value="">-- Selecione um ponto de coleta --</option>';
       pontos.forEach((p) => {
         const opt = document.createElement("option");
-        opt.value = p.nome_local || p.nome || "Ponto";
+        opt.value = JSON.stringify({
+          nome: p.nome_local || p.nome,
+          endereco: p.endereco || "",
+          telefone: p.telefone || ""
+        });
         opt.textContent = `${p.nome_local || p.nome} — ${p.endereco || ""}`;
         selectPontos.appendChild(opt);
       });
 
       pontosPlaceholder.classList.add("hidden");
       pontosControls.classList.remove("hidden");
-
     } catch (err) {
       console.error("❌ Erro ao buscar pontos de coleta:", err);
-      pontosPlaceholder.textContent = "Erro ao carregar pontos. Tente novamente mais tarde.";
+      pontosPlaceholder.textContent = "Erro ao carregar pontos.";
     }
   }
 
   // ============================================================
-  // 🗺️ Ver ponto no mapa
+  // 🗺️ Ver no mapa
   // ============================================================
   verNoMapa.addEventListener("click", () => {
-    const ponto = selectPontos.value;
-    if (!ponto) return alert("Selecione um ponto de coleta.");
-    window.open(`https://www.google.com/maps/search/${encodeURIComponent(ponto)}`, "_blank");
+    const val = selectPontos.value;
+    if (!val) return alert("Selecione um ponto de coleta primeiro.");
+    const ponto = JSON.parse(val);
+    window.open(`https://www.google.com/maps/search/${encodeURIComponent(ponto.endereco)}`, "_blank");
   });
 
   // ============================================================
-  // 💌 Confirmar adoção
+  // 💌 Confirmar adoção + e-mail + Cloudinho animado
   // ============================================================
   btnConfirmar.addEventListener("click", async () => {
     if (!selectPontos.value) {
       alert("Por favor, selecione um ponto de coleta.");
       return;
     }
+
+    const ponto = JSON.parse(selectPontos.value);
+    const dataLimite = new Date();
+    dataLimite.setDate(dataLimite.getDate() + 10);
+    const prazoFormatado = dataLimite.toLocaleDateString("pt-BR");
 
     btnConfirmar.disabled = true;
     btnConfirmar.textContent = "Enviando...";
@@ -150,23 +159,31 @@ document.addEventListener("DOMContentLoaded", () => {
             nome_crianca: carta.nome,
             usuario: usuario.nome,
             email: usuario.email,
-            ponto_coleta: selectPontos.value,
+            ponto_coleta: ponto.nome
           }),
         });
-      }
 
-      if (window.emailjs) {
-        emailjs.send("service_uffgnhx", "template_4yfc899", {
+        // 💙 Envio de e-mail de confirmação via EmailJS
+        await emailjs.send("service_uffgnhx", "template_4yfc899", {
           to_name: usuario.nome,
           to_email: usuario.email,
-          message: "💙 Sua adoção foi registrada com sucesso! Aguarde o contato da equipe do Varal dos Sonhos.",
+          child_name: carta.nome,
+          child_gift: carta.sonho,
+          deadline: prazoFormatado,
+          order_id: carta.id,
+          pickup_name: ponto.nome,
+          pickup_address: ponto.endereco,
+          pickup_phone: ponto.telefone || "(11) 99999-9999"
         });
       }
 
-      alert("💙 Adoção confirmada! Você receberá um e-mail com as instruções.");
-      localStorage.removeItem("carrinho");
-      window.location.href = "index.html";
+      // 🩵 Animação Cloudinho de sucesso
+      mostrarMensagemSucesso();
 
+      setTimeout(() => {
+        localStorage.removeItem("carrinho");
+        window.location.href = "index.html";
+      }, 5000);
     } catch (erro) {
       console.error("❌ Erro ao confirmar adoção:", erro);
       alert("Erro ao confirmar adoção. Tente novamente mais tarde.");
@@ -176,7 +193,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // ↩️ Voltar para cartinhas
+  // ☁️ Função de popup Cloudinho de sucesso
+  // ============================================================
+  window.mostrarMensagemSucesso = function () {
+    let popup = document.createElement("div");
+    popup.className = "cloudinho-popup";
+    popup.innerHTML = `
+      <div class="cloudinho-popup-inner">
+        <img src="imagens/cloudinho.png" alt="Cloudinho" class="cloudinho-popup-img">
+        <div>
+          <h3>💙 Adoção Confirmada!</h3>
+          <p>Obrigado por espalhar amor e realizar sonhos!</p>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(popup);
+
+    // animação de entrada e saída
+    setTimeout(() => popup.classList.add("show"), 100);
+    setTimeout(() => popup.classList.remove("show"), 4000);
+    setTimeout(() => popup.remove(), 5000);
+  };
+
+  // ============================================================
+  // ↩️ Adotar outra cartinha
   // ============================================================
   btnVoltar.addEventListener("click", () => {
     window.location.href = "cartinhas.html";
