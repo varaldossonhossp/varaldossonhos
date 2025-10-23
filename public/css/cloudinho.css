@@ -1,0 +1,81 @@
+/* ============================================================
+   ☁️ CLOUDINHO — Mascote Interativo
+   Fica fixo no canto inferior direito e some após inatividade
+============================================================ */
+
+#cloudinho {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+/* Botão com o Cloudinho */
+#cloudinhoBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+}
+
+.cloudinho-img {
+  width: 90px;
+  height: auto;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.cloudinho-img:hover {
+  transform: scale(1.05);
+}
+
+/* Balão de fala */
+.cloudinho-bubble {
+  background-color: white;
+  color: #333;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  max-width: 260px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+/* Quando o balão estiver visível */
+.cloudinho-bubble.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Esconde visualmente */
+.hidden {
+  display: none;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  #cloudinho {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .cloudinho-img {
+    width: 70px;
+  }
+
+  .cloudinho-bubble {
+    font-size: 14px;
+    max-width: 200px;
+  }
+}
