@@ -1,8 +1,8 @@
 // ============================================================
-// 💌 VARAL DOS SONHOS — cartinhas.js (versão final 2025)
+// 💌 VARAL DOS SONHOS — cartinhas.js (versão final revisada 2025)
 // ------------------------------------------------------------
-// Exibe as cartinhas do Airtable com visual de "varal" e modal zoom
-// e permite registrar a adoção pelo botão 💙 Adotar
+// Exibe as cartinhas do Airtable com visual de "varal" e modal zoom.
+// Permite adicionar ao carrinho (localStorage) e acessar o carrinho
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", carregarCartinhas);
@@ -37,12 +37,14 @@ async function carregarCartinhas() {
       card.className = "card-cartinha";
       card.innerHTML = `
         <img class="prendedor" src="imagens/prendedor.png" alt="Prendedor">
-        <img class="carta" src="${imagem}" alt="Cartinha de ${nome}" loading="lazy" onclick="abrirModal('${imagem}', '${nome}', '${sonho}')">
+        <img class="carta" src="${imagem}" alt="Cartinha de ${nome}" loading="lazy"
+             onclick="abrirModal('${imagem}', '${nome}', '${sonho}')">
         <div class="cartinha-info">
           <h3>${nome}</h3>
           ${idade ? `<p><strong>Idade:</strong> ${idade}</p>` : ""}
           <p><strong>Sonho:</strong> ${sonho}</p>
-          <button class="btn-adotar" data-id="${carta.id}" data-nome="${nome}">💙 Adotar</button>
+          <button class="btn-adotar" data-id="${carta.id}" data-nome="${nome}" data-sonho="${sonho}"
+            data-imagem="${imagem}">💙 Adotar</button>
         </div>
       `;
       container.appendChild(card);
@@ -54,13 +56,15 @@ async function carregarCartinhas() {
 }
 
 // ============================================================
-// 💙 Registrar adoção
+// 🛒 Adicionar cartinha ao carrinho
 // ============================================================
-document.addEventListener("click", async (e) => {
+document.addEventListener("click", (e) => {
   if (e.target.classList.contains("btn-adotar")) {
     const btn = e.target;
-    const id_cartinha = btn.dataset.id;
-    const nome_crianca = btn.dataset.nome;
+    const id = btn.dataset.id;
+    const nome = btn.dataset.nome;
+    const sonho = btn.dataset.sonho;
+    const imagem = btn.dataset.imagem;
 
     const usuario = JSON.parse(localStorage.getItem("usuario"));
     if (!usuario) {
@@ -69,36 +73,22 @@ document.addEventListener("click", async (e) => {
       return;
     }
 
-    try {
-      const baseURL = window.location.hostname.includes("vercel.app")
-        ? ""
-        : "https://varaldossonhos-sp.vercel.app";
-
-      const resposta = await fetch(`${baseURL}/api/adocoes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_cartinha,
-          nome_crianca,
-          usuario: usuario.nome,
-          email: usuario.email,
-        }),
-      });
-
-      const dados = await resposta.json();
-
-      if (resposta.ok) {
-        btn.textContent = "💙 Adotada!";
-        btn.disabled = true;
-        btn.style.background = "#9cd3ff";
-        alert(`Obrigado(a), ${usuario.nome}! A cartinha de ${nome_crianca} foi adotada com sucesso 💙`);
-      } else {
-        alert("❌ Falha ao registrar adoção: " + (dados.erro || "erro desconhecido"));
-      }
-    } catch (err) {
-      console.error("❌ Erro ao registrar adoção:", err);
-      alert("Erro na conexão com o servidor. Tente novamente.");
+    // Adiciona ao carrinho (localStorage)
+    let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
+    const jaExiste = carrinho.some((c) => c.id === id);
+    if (jaExiste) {
+      alert(`⚠️ A cartinha de ${nome} já está no seu carrinho!`);
+      return;
     }
+
+    carrinho.push({ id, nome, sonho, imagem });
+    localStorage.setItem("carrinho", JSON.stringify(carrinho));
+
+    btn.textContent = "💙 No Carrinho!";
+    btn.disabled = true;
+    btn.style.background = "#9cd3ff";
+
+    alert(`💙 A cartinha de ${nome} foi adicionada ao seu carrinho com sucesso!`);
   }
 });
 

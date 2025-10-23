@@ -179,25 +179,26 @@ export default async function handler(req, res) {
     }
 
 // ============================================================
-// 💙 /api/adocoes — Registrar adoção de cartinha
+// 💙 /api/adocoes — Registrar adoção e criar registro no Airtable
 // ============================================================
 if (pathname === "/api/adocoes" && method === "POST") {
-  const { id_cartinha, nome_crianca, usuario, email } = await getBody(req);
+  const { id_cartinha, nome_crianca, usuario, email, ponto_coleta } = await getBody(req);
 
-  if (!id_cartinha || !nome_crianca || !usuario || !email)
+  if (!id_cartinha || !usuario || !email)
     return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
 
   try {
-    // Cria o registro na tabela 'doacoes'
-    const novo = await base("doacoes").create({
+    // ✅ 1. Cria o registro na tabela 'doacoes'
+    const novaDoacao = await base("doacoes").create({
       "doador": usuario,
-      "cartinha": [id_cartinha], // campo LINKADO → recebe array
+      "cartinha": id_cartinha, // ⚠️ texto simples, não link
+      "ponto_coleta": ponto_coleta || "Ponto Central",
       "dados.doacao": new Date().toISOString().split("T")[0],
-      "status.doacao": "aguardando_entrega",
-      "mensagem.confirmacao": `💙 A cartinha de ${nome_crianca} foi adotada por ${usuario}!`,
+      "status.doacao": "aguardando_confirmação",
+      "mensagem.confirmacao": `💌 Adoção registrada para ${nome_crianca}. Aguarde o e-mail de confirmação.`,
     });
 
-    // Atualiza status da cartinha para “adotada” na tabela 'cartinhas'
+    // ✅ 2. Atualiza a cartinha como “adotada”
     await base("cartinhas").update([
       {
         id: id_cartinha,
@@ -207,15 +208,16 @@ if (pathname === "/api/adocoes" && method === "POST") {
 
     return sendJson(res, 201, {
       ok: true,
-      mensagem: "Adoção registrada com sucesso!",
-      id: novo.id,
+      id: novaDoacao.id,
+      mensagem: "Cartinha adicionada ao carrinho com sucesso!"
     });
 
   } catch (erro) {
-    console.error("Erro ao registrar adoção:", erro);
+    console.error("❌ Erro ao registrar adoção:", erro);
     return sendJson(res, 500, { erro: erro.message || String(erro) });
   }
 }
+
 
     // ============================================================
     // ☁️ /api/cloudinho — assistente virtual
