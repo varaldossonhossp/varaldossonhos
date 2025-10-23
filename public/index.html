@@ -1,78 +1,52 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <!-- ============================================================
-       💙 FANTÁSTICA FÁBRICA DE SONHOS — Página Inicial (Index)
-       Deploy: Vercel + Airtable + EmailJS + .NET MAUI
-  ============================================================ -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description"
         content="Fantástica Fábrica de Sonhos — plataforma solidária que conecta doadores e crianças através da adoção de cartinhas." />
   <meta name="theme-color" content="#4A90E2" />
-
   <title>Fantástica Fábrica de Sonhos 💙</title>
   <link rel="icon" href="imagens/favicon.png" type="image/png" />
 
   <!-- 🌈 Estilos unificados -->
-<link rel="stylesheet" href="/css/style.css">
-<link rel="stylesheet" href="/css/cloudinho.css">
-
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/cloudinho.css">
 </head>
 
 <body>
-  <!-- ============================================================
-       🔝 Cabeçalho dinâmico (importado via componentes.js)
-  ============================================================ -->
   <div id="header"></div>
 
-  <!-- ============================================================
-       🌤️ SEÇÃO HERO — Apresentação principal
-  ============================================================ -->
   <main>
     <section class="hero">
       <div class="container hero-flex">
-        
-        <!-- 🔹 Texto principal -->
         <div class="hero-texto">
-          <img src="imagens/nuvem-sem-fundo.png"
-               alt="Fantástica Fábrica de Sonhos"
-               class="nuvem-flutuante" />
-
+          <img src="imagens/nuvem-sem-fundo.png" alt="Fantástica Fábrica de Sonhos" class="nuvem-flutuante" />
           <h2 class="frase-sub">Adote com responsabilidade 💙</h2>
-          <p class="frase-base">
-            Cada cartinha que você lê é uma janela para o sonho de uma criança.
-          </p>
+          <p>Cada cartinha que você lê é uma janela para o sonho de uma criança.</p>
 
           <div class="cta-group">
             <a class="btn btn-primary" href="cartinhas.html">Quero Adotar um Sonho</a>
             <a class="btn btn-outline" href="como-funciona.html">Como funciona</a>
           </div>
 
-          <ul class="lista-beneficios">
+          <ul>
             <li>Processo simples e transparente</li>
             <li>Acompanhamento por e-mail e WhatsApp</li>
           </ul>
         </div>
 
-        <!-- 🔹 Carrossel de eventos -->
         <div class="hero-carrossel">
           <h2 class="titulo-carrossel">✨ Momentos que inspiram ✨</h2>
           <div class="carousel-container">
             <button class="carousel-btn prev" id="carouselPrev">❮</button>
-            <ul class="carousel-track" id="carouselTrack">
-              <!-- As imagens dos eventos serão carregadas dinamicamente -->
-            </ul>
+            <ul class="carousel-track" id="carouselTrack"></ul>
             <button class="carousel-btn next" id="carouselNext">❯</button>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- ============================================================
-         📅 Seção de eventos futuros
-    ============================================================ -->
     <section class="strip eventos-strip">
       <div class="container strip-grid">
         <div>
@@ -84,21 +58,10 @@
     </section>
   </main>
 
-  <!-- ============================================================
-       🔚 Rodapé dinâmico
-  ============================================================ -->
   <div id="footer"></div>
 
-  <!-- ============================================================
-       📜 Scripts principais (ordem correta)
-  ============================================================ -->
-  <script type="module" src="/public/js/componentes.js" defer></script>
-  <script type="module" src="/public/js/index.js" defer></script>
-  <script src="/public/js/cloudinho.js" defer></script>
-  <script type="module" src="js/index.js"></script>
-
-
-
-  
+  <script type="module" src="js/componentes.js" defer></script>
+  <script type="module" src="js/index.js" defer></script>
+  <script src="js/cloudinho.js" defer></script>
 </body>
 </html>
