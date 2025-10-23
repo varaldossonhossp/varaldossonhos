@@ -178,27 +178,44 @@ export default async function handler(req, res) {
       return sendJson(res, 201, { ok: true, id: novo.id });
     }
 
-    // ============================================================
-    // 🎁 /api/adocoes — registrar adoção
-    // ============================================================
-    if (pathname === "/api/adocoes" && method === "POST") {
-      const dados = await getBody(req);
-      const { id_cartinha, nome_crianca, usuario, email } = dados;
+// ============================================================
+// 💙 /api/adocoes — Registrar adoção de cartinha
+// ============================================================
+if (pathname === "/api/adocoes" && method === "POST") {
+  const { id_cartinha, nome_crianca, usuario, email } = await getBody(req);
 
-      if (!id_cartinha || !usuario)
-        return sendJson(res, 400, { erro: "Dados incompletos para adoção." });
+  if (!id_cartinha || !nome_crianca || !usuario || !email)
+    return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
 
-      const novo = await base("doacoes").create({
-        id_cartinha,
-        nome_crianca,
-        usuario,
-        email,
-        data_adocao: new Date().toISOString().split("T")[0],
-        status: "confirmada",
-      });
+  try {
+    // Cria o registro na tabela 'doacoes'
+    const novo = await base("doacoes").create({
+      "doador": usuario,
+      "cartinha": [id_cartinha], // campo LINKADO → recebe array
+      "dados.doacao": new Date().toISOString().split("T")[0],
+      "status.doacao": "aguardando_entrega",
+      "mensagem.confirmacao": `💙 A cartinha de ${nome_crianca} foi adotada por ${usuario}!`,
+    });
 
-      return sendJson(res, 201, { ok: true, id: novo.id });
-    }
+    // Atualiza status da cartinha para “adotada” na tabela 'cartinhas'
+    await base("cartinhas").update([
+      {
+        id: id_cartinha,
+        fields: { "status": "adotada" }
+      }
+    ]);
+
+    return sendJson(res, 201, {
+      ok: true,
+      mensagem: "Adoção registrada com sucesso!",
+      id: novo.id,
+    });
+
+  } catch (erro) {
+    console.error("Erro ao registrar adoção:", erro);
+    return sendJson(res, 500, { erro: erro.message || String(erro) });
+  }
+}
 
     // ============================================================
     // ☁️ /api/cloudinho — assistente virtual
