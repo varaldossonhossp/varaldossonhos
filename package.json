@@ -1,30 +1,17 @@
 {
-  "name": "varal-dos-sonhos",
+  "name": "varaldossonhos",
   "version": "1.0.0",
-  "description": "💙 Varal dos Sonhos — Plataforma Web para Gestão de Doações e Conexão Solidária",
-  "type": "module",
-  "engines": {
-    "node": "20.x"
-  },
+  "description": "Fantástica Fábrica de Sonhos 💙",
+  "main": "api/index.js",
   "scripts": {
-    "dev": "vercel dev",
-    "start": "node api/index.js",
-    "build": "echo 'Build executado pelo Vercel (static + serverless)'"
+    "start": "node api/index.js"
   },
   "dependencies": {
     "airtable": "^0.12.2",
     "dotenv": "^16.4.5",
-    "@emailjs/browser": "^4.4.1"
+    "@emailjs/browser": "^4.0.3"
   },
-  "keywords": [
-    "doações",
-    "cartinhas",
-    "solidariedade",
-    "airtable",
-    "emailjs",
-    "vercel",
-    "nodejs"
-  ],
-  "author": "Carina Mendes Dev",
-  "license": "MIT"
+  "engines": {
+    "node": "18.x"
+  }
 }
