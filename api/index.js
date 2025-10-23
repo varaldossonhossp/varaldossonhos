@@ -1,11 +1,13 @@
 // ============================================================
-// 💙 VARAL DOS SONHOS — /api/index.js (versão final completa)
+// 💙 VARAL DOS SONHOS — /api/index.js (versão completa final)
 // ------------------------------------------------------------
-// Rotas integradas e compatíveis com seu Airtable atual:
+// Rotas integradas:
 //   • /api/health
 //   • /api/eventos
 //   • /api/cartinhas
 //   • /api/pontosdecoleta
+//   • /api/login
+//   • /api/cadastro
 // ============================================================
 
 import Airtable from "airtable";
@@ -95,14 +97,11 @@ export default async function handler(req, res) {
     }
 
     // ============================================================
-    // 💌 /api/cartinhas — compatível com seu Airtable
+    // 💌 /api/cartinhas
     // ============================================================
     if (pathname === "/api/cartinhas" && method === "GET") {
       const records = await base("cartinhas")
-        .select({
-          sort: [{ field: "nome_crianca", direction: "asc" }],
-          maxRecords: 100,
-        })
+        .select({ sort: [{ field: "nome_crianca", direction: "asc" }] })
         .all();
 
       const cartinhas = records.map((r) => ({
@@ -145,6 +144,63 @@ export default async function handler(req, res) {
     }
 
     // ============================================================
+    // 👤 /api/login — autenticação
+    // ============================================================
+    if (pathname === "/api/login" && method === "POST") {
+      const { email, senha } = await getBody(req);
+
+      if (!email || !senha)
+        return sendJson(res, 400, { erro: "E-mail e senha obrigatórios." });
+
+      const records = await base("usuario")
+        .select({
+          filterByFormula: `AND({email}='${email}', {senha}='${senha}', {status}='ativo')`,
+          maxRecords: 1,
+        })
+        .all();
+
+      if (records.length === 0)
+        return sendJson(res, 401, { erro: "E-mail ou senha inválidos." });
+
+      const user = records[0].fields;
+      return sendJson(res, 200, {
+        mensagem: "Login realizado com sucesso!",
+        usuario: {
+          id: records[0].id,
+          nome: user.nome,
+          tipo: user.tipo_usuario,
+          email: user.email,
+        },
+      });
+    }
+
+    // ============================================================
+    // 🆕 /api/cadastro — novo usuário
+    // ============================================================
+    if (pathname === "/api/cadastro" && method === "POST") {
+      const dados = await getBody(req);
+      const { nome, email, senha, tipo_usuario } = dados;
+
+      if (!nome || !email || !senha)
+        return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
+
+      await base("usuario").create([
+        {
+          fields: {
+            nome,
+            email,
+            senha,
+            tipo_usuario: tipo_usuario || "doador",
+            status: "ativo",
+            data_cadastro: new Date().toISOString().split("T")[0],
+          },
+        },
+      ]);
+
+      return sendJson(res, 201, { mensagem: "Usuário cadastrado com sucesso!" });
+    }
+
+    // ============================================================
     // 🚫 Rota não encontrada
     // ============================================================
     return sendJson(res, 404, { erro: "Rota não encontrada." });
@@ -155,4 +211,21 @@ export default async function handler(req, res) {
       detalhe: erro.message || String(erro),
     });
   }
+}
+
+// ============================================================
+// 🧩 Função para ler body JSON (POST)
+// ============================================================
+async function getBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk.toString()));
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
 }
