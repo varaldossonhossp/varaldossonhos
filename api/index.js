@@ -1,12 +1,11 @@
 // ============================================================
-// 💙 VARAL DOS SONHOS — /api/index.js (versão final 2025)
+// 💙 VARAL DOS SONHOS — /api/index.js (versão final completa)
 // ------------------------------------------------------------
-// Rotas integradas:
+// Rotas integradas e compatíveis com seu Airtable atual:
 //   • /api/health
 //   • /api/eventos
 //   • /api/cartinhas
 //   • /api/pontosdecoleta
-// Compatível com Node.js 20 (Vercel Free)
 // ============================================================
 
 import Airtable from "airtable";
@@ -96,21 +95,29 @@ export default async function handler(req, res) {
     }
 
     // ============================================================
-    // 💌 /api/cartinhas
+    // 💌 /api/cartinhas — compatível com seu Airtable
     // ============================================================
     if (pathname === "/api/cartinhas" && method === "GET") {
       const records = await base("cartinhas")
-        .select({ sort: [{ field: "nome", direction: "asc" }] })
+        .select({
+          sort: [{ field: "nome_crianca", direction: "asc" }],
+          maxRecords: 100,
+        })
         .all();
 
       const cartinhas = records.map((r) => ({
-        id: r.id,
-        nome: r.fields.nome || "Criança",
+        id: r.fields.id_cartinha || r.id,
+        nome: r.fields.nome_crianca || r.fields.primeiro_nome || "Criança",
         idade: r.fields.idade || "",
-        carta: r.fields.carta || r.fields.mensagem || "",
+        sexo: r.fields.sexo || "",
+        sonho: r.fields.sonho || "",
+        escola: r.fields.escola || "",
+        cidade: r.fields.cidade || "",
+        ponto_coleta: r.fields.ponto_coleta || "",
         imagem:
-          firstImageUrl(r.fields, ["imagem", "foto", "anexo"]) ||
+          firstImageUrl(r.fields, ["imagem_cartinha", "imagem", "foto"]) ||
           "/imagens/cartinha-padrao.png",
+        status: r.fields.status || "disponível",
       }));
 
       return sendJson(res, 200, cartinhas);
