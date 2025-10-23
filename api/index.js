@@ -3,14 +3,14 @@
 // ------------------------------------------------------------
 // API única — compatível com o plano gratuito da Vercel
 // ------------------------------------------------------------
-// Rotas internas:
+// Rotas ativas:
 //   • GET  /api/health
 //   • GET  /api/eventos
 //   • GET  /api/cartinhas
 //   • GET  /api/pontosdecoleta
 //   • POST /api/login
 //   • POST /api/cadastro
-//   • POST /api/adocoes
+//   • POST /api/adocoes  (com envio de e-mail)
 //   • POST /api/cloudinho
 // ============================================================
 
@@ -20,7 +20,7 @@ import enviarEmail from "./lib/enviarEmail.js";
 export const config = { runtime: "nodejs" };
 
 // ============================================================
-// 🧰 Função utilitária para enviar respostas JSON
+// 🧰 Utilitário para resposta JSON
 // ============================================================
 function sendJson(res, status, data) {
   res.statusCode = status;
@@ -103,13 +103,20 @@ export default async function handler(req, res) {
     // 🔑 /api/login
     if (pathname === "/api/login" && method === "POST") {
       const { email, senha } = await getBody(req);
-      const records = await base("usuario").select({
-        filterByFormula: `AND({email}='${email}', {senha}='${senha}')`,
-        maxRecords: 1,
-      }).all();
-      if (records.length === 0) return sendJson(res, 401, { erro: "Credenciais inválidas." });
+      const records = await base("usuario")
+        .select({
+          filterByFormula: `AND({email}='${email}', {senha}='${senha}')`,
+          maxRecords: 1,
+        })
+        .all();
+
+      if (records.length === 0)
+        return sendJson(res, 401, { erro: "Credenciais inválidas." });
+
       const u = records[0].fields;
-      return sendJson(res, 200, { usuario: { nome: u.nome, email: u.email, tipo: u.tipo_usuario } });
+      return sendJson(res, 200, {
+        usuario: { nome: u.nome, email: u.email, tipo: u.tipo_usuario },
+      });
     }
 
     // 🧾 /api/cadastro
@@ -128,20 +135,30 @@ export default async function handler(req, res) {
 
     // 💙 /api/adocoes — Registrar e enviar e-mail
     if (pathname === "/api/adocoes" && method === "POST") {
-      const { id_cartinha, nome_crianca, usuario, email, ponto_coleta } = await getBody(req);
+      const { id_cartinha, nome_crianca, usuario, email, ponto_coleta } =
+        await getBody(req);
+
       if (!id_cartinha || !usuario || !email)
         return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
+
+      const dataHoje = new Date().toISOString().split("T")[0];
+      const dataEntrega = new Date();
+      dataEntrega.setDate(dataEntrega.getDate() + 10);
 
       const nova = await base("doacoes").create({
         doador: usuario,
         cartinha: id_cartinha,
         ponto_coleta: ponto_coleta || "Ponto Central",
-        data_doacao: new Date().toISOString().split("T")[0],
-        status_doacao: "aguardando_confirmação",
+        dados_doacao: dataHoje,
+        status_doacao: "aguardando_entrega",
       });
 
-      await base("cartinhas").update([{ id: id_cartinha, fields: { status: "adotada" } }]);
+      // atualiza status da cartinha
+      await base("cartinhas").update([
+        { id: id_cartinha, fields: { status: "adotada" } },
+      ]);
 
+      // Envio de e-mail via EmailJS
       const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
       const mensagem = `
 Olá ${usuario},
@@ -149,14 +166,18 @@ Sua adoção foi confirmada com sucesso! 💌
 
 👧 Criança: ${nome_crianca}
 📦 Ponto de Coleta: ${ponto_coleta}
-📅 Entregar até: ${new Date(Date.now() + 10 * 86400000).toLocaleDateString("pt-BR")}
+📅 Entregar até: ${dataEntrega.toLocaleDateString("pt-BR")}
 
 Obrigado por espalhar amor e realizar sonhos!
 `;
 
       await enviarEmail(email, assunto, mensagem, 10);
 
-      return sendJson(res, 201, { ok: true, id: nova.id, mensagem: "Adoção registrada e e-mail enviado." });
+      return sendJson(res, 201, {
+        ok: true,
+        id: nova.id,
+        mensagem: "Adoção registrada e e-mail enviado.",
+      });
     }
 
     // ☁️ /api/cloudinho
@@ -164,16 +185,21 @@ Obrigado por espalhar amor e realizar sonhos!
       const { pergunta } = await getBody(req);
       const registros = await base("cloudinho_kb").select().all();
       const perguntaLower = pergunta.toLowerCase();
+
       for (const r of registros) {
-        const palavras = (r.fields.palavras_chave || []).map((p) => p.toLowerCase());
+        const palavras = (r.fields.palavras_chave || []).map((p) =>
+          p.toLowerCase()
+        );
         if (palavras.some((p) => perguntaLower.includes(p)))
           return sendJson(res, 200, { resposta: r.fields.resposta });
       }
-      return sendJson(res, 200, { resposta: "Desculpe, ainda não sei responder isso 💭." });
+
+      return sendJson(res, 200, {
+        resposta: "Desculpe, ainda não sei responder isso 💭.",
+      });
     }
 
     return sendJson(res, 404, { erro: "Rota não encontrada." });
-
   } catch (erro) {
     console.error("❌ Erro interno:", erro);
     return sendJson(res, 500, { erro: erro.message || String(erro) });
@@ -181,7 +207,7 @@ Obrigado por espalhar amor e realizar sonhos!
 }
 
 // ============================================================
-// 🧩 Função auxiliar para ler corpo JSON
+// 🔧 Função auxiliar para ler corpo JSON
 // ============================================================
 function getBody(req) {
   return new Promise((resolve, reject) => {
