@@ -1,16 +1,14 @@
 // ============================================================
-// 🛒 VARAL DOS SONHOS — carrinho.js (versão estável e revisada)
+// 🛒 VARAL DOS SONHOS — carrinho.js (versão final 2025)
 // ------------------------------------------------------------
 // ✅ Exibe cartinhas do carrinho
-// ✅ Carrega pontos de coleta (API /api/pontosdecoleta)
-// ✅ Habilita botão ao selecionar ponto
+// ✅ Carrega pontos de coleta do Airtable (via /api/pontosdecoleta)
+// ✅ Habilita botão ao escolher ponto
 // ✅ Envia adoção (API + EmailJS)
 // ✅ Cloudinho animado 💙
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("🚀 carrinho.js carregado com sucesso!");
-
   const carrinhoLista = document.getElementById("carrinhoLista");
   const btnLimpar = document.getElementById("btnLimpar");
   const btnConfirmar = document.getElementById("btnConfirmar");
@@ -86,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ============================================================
   async function carregarPontos() {
     pontosPlaceholder.textContent = "Carregando pontos de coleta...";
+    selectPontos.innerHTML = "";
 
     try {
       const baseURL = window.location.hostname.includes("vercel.app")
@@ -96,7 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
       const pontos = await resp.json();
-      console.log("📦 Pontos recebidos:", pontos);
+      if (!Array.isArray(pontos) || pontos.length === 0)
+        throw new Error("Sem pontos cadastrados.");
 
       preencherSelect(pontos);
     } catch (err) {
@@ -125,7 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     pontosPlaceholder.textContent = "";
-    document.getElementById("pontosControls").classList.remove("hidden");
     verificarBotaoConfirmar();
   }
 
@@ -136,13 +135,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const temPonto = !!selectPontos.value;
     const temCartinha = carrinho.length > 0;
 
-    console.log("🧩 Verificando:", { temPonto, temCartinha, valor: selectPontos.value });
-
     if (temPonto && temCartinha) {
       btnConfirmar.disabled = false;
       btnConfirmar.style.opacity = "1";
       btnConfirmar.style.cursor = "pointer";
-      console.log("✅ Botão habilitado!");
     } else {
       btnConfirmar.disabled = true;
       btnConfirmar.style.opacity = "0.6";
@@ -150,10 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  selectPontos.addEventListener("change", () => {
-    console.log("📍 Mudou ponto:", selectPontos.value);
-    verificarBotaoConfirmar();
-  });
+  selectPontos.addEventListener("change", verificarBotaoConfirmar);
 
   // ============================================================
   // 🗺️ Ver ponto no mapa
@@ -201,10 +194,9 @@ document.addEventListener("DOMContentLoaded", () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id_cartinha: carta.id,
-            nome_crianca: carta.nome,
-            usuario: usuario.nome,
+            doador: usuario.nome,
             email: usuario.email,
+            cartinha: carta.nome,
             ponto_coleta: pontoSelecionado.nome,
           }),
         });
@@ -215,16 +207,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!resposta.ok)
           throw new Error(resultado.erro || "Erro ao registrar adoção.");
 
-        // 💙 Envia e-mail via EmailJS
+        // 💙 E-mail de confirmação via EmailJS
         await emailjs.send("service_uffgnhx", "template_4yfc899", {
           to_name: usuario.nome,
           to_email: usuario.email,
-          child_name: carta.nome,
-          child_gift: carta.sonho,
-          deadline: prazo,
-          pickup_name: pontoSelecionado.nome,
-          pickup_address: pontoSelecionado.endereco,
-          pickup_phone: pontoSelecionado.telefone || "(11) 99999-9999",
+          crianca: carta.nome,
+          presente: carta.sonho,
+          data_entrega: prazo,
+          codigo_cartinha: carta.id,
+          ponto_coleta: pontoSelecionado.nome,
+          endereco: pontoSelecionado.endereco,
+          telefone: pontoSelecionado.telefone || "(11) 99999-9999",
+          pontuacao: "10",
+          nivel: "Doador Estelar 💫",
         });
       }
 
@@ -248,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
     popup.className = "cloudinho-popup";
     popup.innerHTML = `
       <div class="cloudinho-popup-inner">
-        <img src="/public/imagens/cloudinho.png" alt="Cloudinho" class="cloudinho-popup-img">
+        <img src="imagens/cloudinho.png" alt="Cloudinho" class="cloudinho-popup-img">
         <div>
           <h3>💙 Adoção Confirmada!</h3>
           <p>Obrigado por espalhar amor e realizar sonhos!</p>

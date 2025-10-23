@@ -1,5 +1,5 @@
 // ============================================================
-// 💙 VARAL DOS SONHOS — /api/index.js
+// 💙 VARAL DOS SONHOS — /api/index.js (versão final revisada)
 // ------------------------------------------------------------
 // API única — compatível com o plano gratuito da Vercel
 // ------------------------------------------------------------
@@ -20,7 +20,7 @@ import enviarEmail from "./lib/enviarEmail.js";
 export const config = { runtime: "nodejs" };
 
 // ============================================================
-// 🧰 Utilitário para resposta JSON
+// 🧰 Função utilitária para resposta JSON
 // ============================================================
 function sendJson(res, status, data) {
   res.statusCode = status;
@@ -32,9 +32,10 @@ function sendJson(res, status, data) {
 }
 
 // ============================================================
-// 🌈 Handler principal
+// 🌈 Função principal (handler)
 // ============================================================
 export default async function handler(req, res) {
+  // 🔹 Permitir pré-flight (CORS)
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -55,12 +56,16 @@ export default async function handler(req, res) {
   const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
 
   try {
-    // 🩺 /api/health
+    // ============================================================
+    // 🩺 /api/health — teste de vida
+    // ============================================================
     if (pathname === "/api/health") {
       return sendJson(res, 200, { ok: true, runtime: "nodejs" });
     }
 
-    // 🗓️ /api/eventos
+    // ============================================================
+    // 🗓️ /api/eventos — lista de eventos
+    // ============================================================
     if (pathname === "/api/eventos" && method === "GET") {
       const records = await base("eventos").select().all();
       const eventos = records.map((r) => ({
@@ -73,7 +78,9 @@ export default async function handler(req, res) {
       return sendJson(res, 200, eventos);
     }
 
-    // 💌 /api/cartinhas
+    // ============================================================
+    // 💌 /api/cartinhas — lista de cartinhas
+    // ============================================================
     if (pathname === "/api/cartinhas" && method === "GET") {
       const records = await base("cartinhas").select().all();
       const cartinhas = records.map((r) => ({
@@ -87,7 +94,9 @@ export default async function handler(req, res) {
       return sendJson(res, 200, cartinhas);
     }
 
-    // 📍 /api/pontosdecoleta
+    // ============================================================
+    // 📍 /api/pontosdecoleta — locais de entrega
+    // ============================================================
     if (pathname === "/api/pontosdecoleta" && method === "GET") {
       const records = await base("pontosdecoleta").select().all();
       const pontos = records.map((r) => ({
@@ -100,7 +109,9 @@ export default async function handler(req, res) {
       return sendJson(res, 200, pontos);
     }
 
-    // 🔑 /api/login
+    // ============================================================
+    // 🔑 /api/login — autenticação
+    // ============================================================
     if (pathname === "/api/login" && method === "POST") {
       const { email, senha } = await getBody(req);
       const records = await base("usuario")
@@ -119,7 +130,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🧾 /api/cadastro
+    // ============================================================
+    // 🧾 /api/cadastro — novo usuário
+    // ============================================================
     if (pathname === "/api/cadastro" && method === "POST") {
       const dados = await getBody(req);
       const novo = await base("usuario").create({
@@ -133,54 +146,79 @@ export default async function handler(req, res) {
       return sendJson(res, 201, { ok: true, id: novo.id });
     }
 
-    // 💙 /api/adocoes — Registrar e enviar e-mail
+    // ============================================================
+    // 💌 /api/adocoes — registrar adoção (corrigido)
+    // ============================================================
     if (pathname === "/api/adocoes" && method === "POST") {
-      const { id_cartinha, nome_crianca, usuario, email, ponto_coleta } =
-        await getBody(req);
+      try {
+        const { doador, email, cartinha, ponto_coleta } = await getBody(req);
 
-      if (!id_cartinha || !usuario || !email)
-        return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
+        if (!doador || !cartinha || !ponto_coleta) {
+          return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
+        }
 
-      const dataHoje = new Date().toISOString().split("T")[0];
-      const dataEntrega = new Date();
-      dataEntrega.setDate(dataEntrega.getDate() + 10);
+        const dataAtual = new Date().toLocaleDateString("pt-BR");
 
-      const nova = await base("doacoes").create({
-        doador: usuario,
-        cartinha: id_cartinha,
-        ponto_coleta: ponto_coleta || "Ponto Central",
-        dados_doacao: dataHoje,
-        status_doacao: "aguardando_entrega",
-      });
+        // Cria registro na tabela de doações
+        const novoRegistro = await base("doacoes").create([
+          {
+            fields: {
+              doador,
+              cartinha,
+              ponto_coleta,
+              status_doacao: "confirmado",
+              mensagem_confirmacao: `💙 Adoção confirmada em ${dataAtual}`,
+            },
+          },
+        ]);
 
-      // atualiza status da cartinha
-      await base("cartinhas").update([
-        { id: id_cartinha, fields: { status: "adotada" } },
-      ]);
+        // Atualiza status da cartinha para "adotada"
+        try {
+          const cartinhaRecord = await base("cartinhas")
+            .select({
+              filterByFormula: `{nome_crianca}='${cartinha}'`,
+              maxRecords: 1,
+            })
+            .firstPage();
 
-      // Envio de e-mail via EmailJS
-      const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
-      const mensagem = `
-Olá ${usuario},
+          if (cartinhaRecord.length > 0) {
+            await base("cartinhas").update([
+              { id: cartinhaRecord[0].id, fields: { status: "adotada" } },
+            ]);
+          }
+        } catch (erro) {
+          console.warn("⚠️ Erro ao atualizar status da cartinha:", erro.message);
+        }
+
+        // Envia e-mail de confirmação
+        const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
+        const mensagem = `
+Olá ${doador},
 Sua adoção foi confirmada com sucesso! 💌
 
-👧 Criança: ${nome_crianca}
-📦 Ponto de Coleta: ${ponto_coleta}
-📅 Entregar até: ${dataEntrega.toLocaleDateString("pt-BR")}
+🎁 Cartinha: ${cartinha}
+📍 Ponto de Coleta: ${ponto_coleta}
+📅 Entregar até: ${new Date(Date.now() + 10 * 86400000).toLocaleDateString("pt-BR")}
 
-Obrigado por espalhar amor e realizar sonhos!
-`;
+Obrigado por espalhar amor e realizar sonhos! 💙
+        `;
 
-      await enviarEmail(email, assunto, mensagem, 10);
+        await enviarEmail(email, assunto, mensagem, 10);
 
-      return sendJson(res, 201, {
-        ok: true,
-        id: nova.id,
-        mensagem: "Adoção registrada e e-mail enviado.",
-      });
+        return sendJson(res, 201, {
+          ok: true,
+          id: novoRegistro[0].id,
+          mensagem: "Adoção registrada e e-mail enviado com sucesso.",
+        });
+      } catch (erro) {
+        console.error("❌ Erro ao registrar adoção:", erro);
+        return sendJson(res, 500, { erro: erro.message });
+      }
     }
 
-    // ☁️ /api/cloudinho
+    // ============================================================
+    // ☁️ /api/cloudinho — base de conhecimento
+    // ============================================================
     if (pathname === "/api/cloudinho" && method === "POST") {
       const { pergunta } = await getBody(req);
       const registros = await base("cloudinho_kb").select().all();
@@ -190,8 +228,9 @@ Obrigado por espalhar amor e realizar sonhos!
         const palavras = (r.fields.palavras_chave || []).map((p) =>
           p.toLowerCase()
         );
-        if (palavras.some((p) => perguntaLower.includes(p)))
+        if (palavras.some((p) => perguntaLower.includes(p))) {
           return sendJson(res, 200, { resposta: r.fields.resposta });
+        }
       }
 
       return sendJson(res, 200, {
@@ -199,6 +238,9 @@ Obrigado por espalhar amor e realizar sonhos!
       });
     }
 
+    // ============================================================
+    // Rota não encontrada
+    // ============================================================
     return sendJson(res, 404, { erro: "Rota não encontrada." });
   } catch (erro) {
     console.error("❌ Erro interno:", erro);
