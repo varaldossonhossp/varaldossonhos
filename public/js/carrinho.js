@@ -1,10 +1,10 @@
 // ============================================================
-// 🛒 VARAL DOS SONHOS — carrinho.js (versão final com Cloudinho 2025)
+// 🛒 VARAL DOS SONHOS — carrinho.js (versão final 2025)
 // ------------------------------------------------------------
 // - Exibe cartinhas do carrinho (localStorage)
 // - Escolha de ponto de coleta (API /api/pontosdecoleta)
-// - Confirma adoção via /api/adocoes + EmailJS
-// - Animação de sucesso com Cloudinho 💙
+// - Confirma adoção via /api/adocoes (backend envia o e-mail)
+// - Animação do Cloudinho ao sucesso 💙
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // 💌 Confirmar adoção + e-mail + Cloudinho animado
+  // 💌 Confirmar adoção (backend envia o e-mail)
   // ============================================================
   btnConfirmar.addEventListener("click", async () => {
     if (!selectPontos.value) {
@@ -138,10 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const ponto = JSON.parse(selectPontos.value);
-    const dataLimite = new Date();
-    dataLimite.setDate(dataLimite.getDate() + 10);
-    const prazoFormatado = dataLimite.toLocaleDateString("pt-BR");
-
     btnConfirmar.disabled = true;
     btnConfirmar.textContent = "Enviando...";
 
@@ -151,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         : "https://varaldossonhos-sp.vercel.app";
 
       for (const carta of carrinho) {
-        await fetch(`${baseURL}/api/adocoes`, {
+        const res = await fetch(`${baseURL}/api/adocoes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -159,27 +155,15 @@ document.addEventListener("DOMContentLoaded", () => {
             nome_crianca: carta.nome,
             usuario: usuario.nome,
             email: usuario.email,
-            ponto_coleta: ponto.nome
+            ponto_coleta: ponto.nome,
           }),
         });
 
-        // 💙 Envio de e-mail de confirmação via EmailJS
-        await emailjs.send("service_uffgnhx", "template_4yfc899", {
-          to_name: usuario.nome,
-          to_email: usuario.email,
-          child_name: carta.nome,
-          child_gift: carta.sonho,
-          deadline: prazoFormatado,
-          order_id: carta.id,
-          pickup_name: ponto.nome,
-          pickup_address: ponto.endereco,
-          pickup_phone: ponto.telefone || "(11) 99999-9999"
-        });
+        const result = await res.json();
+        console.log("📬 Retorno da API:", result);
       }
 
-      // 🩵 Animação Cloudinho de sucesso
       mostrarMensagemSucesso();
-
       setTimeout(() => {
         localStorage.removeItem("carrinho");
         window.location.href = "index.html";
@@ -187,32 +171,37 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (erro) {
       console.error("❌ Erro ao confirmar adoção:", erro);
       alert("Erro ao confirmar adoção. Tente novamente mais tarde.");
+    } finally {
       btnConfirmar.disabled = false;
       btnConfirmar.textContent = "✅ Confirmar Adoção";
     }
   });
 
   // ============================================================
-  // ☁️ Função de popup Cloudinho de sucesso
+  // ☁️ Cloudinho animado de sucesso
   // ============================================================
   window.mostrarMensagemSucesso = function () {
-    let popup = document.createElement("div");
+    const popup = document.createElement("div");
     popup.className = "cloudinho-popup";
     popup.innerHTML = `
       <div class="cloudinho-popup-inner">
         <img src="imagens/cloudinho.png" alt="Cloudinho" class="cloudinho-popup-img">
         <div>
           <h3>💙 Adoção Confirmada!</h3>
-          <p>Obrigado por espalhar amor e realizar sonhos!</p>
+          <p>Você receberá um e-mail com as instruções e a data de entrega!</p>
         </div>
       </div>
+      <audio id="soundSuccess" src="/public/sounds/sucesso.mp3"></audio>
     `;
     document.body.appendChild(popup);
 
-    // animação de entrada e saída
+    // som suave
+    const audio = popup.querySelector("#soundSuccess");
+    if (audio) audio.play().catch(() => {});
+
     setTimeout(() => popup.classList.add("show"), 100);
-    setTimeout(() => popup.classList.remove("show"), 4000);
-    setTimeout(() => popup.remove(), 5000);
+    setTimeout(() => popup.classList.remove("show"), 4500);
+    setTimeout(() => popup.remove(), 5200);
   };
 
   // ============================================================
