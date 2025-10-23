@@ -1,19 +1,19 @@
 // ============================================================
-// 💙 VARAL DOS SONHOS — /api/index.js (versão 2025)
+// 💙 VARAL DOS SONHOS — /api/index.js (versão final 2025)
 // ------------------------------------------------------------
-// API única compatível com plano gratuito Vercel
-// Rotas incluídas:
+// Rotas integradas:
 //   • /api/health
 //   • /api/eventos
 //   • /api/cartinhas
 //   • /api/pontosdecoleta
+// Compatível com Node.js 20 (Vercel Free)
 // ============================================================
 
 import Airtable from "airtable";
 export const config = { runtime: "nodejs" };
 
 // ============================================================
-// 🧰 Funções auxiliares
+// ⚙️ Funções auxiliares
 // ============================================================
 function sendJson(res, status, data) {
   res.statusCode = status;
@@ -22,22 +22,6 @@ function sendJson(res, status, data) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.end(JSON.stringify(data, null, 2));
-}
-
-async function tableExists(base, name) {
-  try {
-    await base(name).select({ maxRecords: 1 }).firstPage();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function findTable(base, candidates) {
-  for (const t of candidates) {
-    if (await tableExists(base, t)) return t;
-  }
-  return null;
 }
 
 function firstImageUrl(fields, keys) {
@@ -67,7 +51,7 @@ export default async function handler(req, res) {
   const pathname = baseUrl.pathname;
 
   // ============================================================
-  // 🩺 /api/health — Diagnóstico
+  // 🩺 /api/health
   // ============================================================
   if (pathname === "/api/health") {
     const envs = ["AIRTABLE_API_KEY", "AIRTABLE_BASE_ID"];
@@ -81,22 +65,17 @@ export default async function handler(req, res) {
   // ============================================================
   const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-    return sendJson(res, 500, {
-      erro: "⚠️ Variáveis Airtable ausentes no ambiente.",
-    });
+    return sendJson(res, 500, { erro: "⚠️ Variáveis Airtable ausentes." });
   }
 
   const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
 
   try {
     // ============================================================
-    // 🗓️ /api/eventos — eventos em destaque
+    // 🗓️ /api/eventos
     // ============================================================
     if (pathname === "/api/eventos" && method === "GET") {
-      const tabelaEventos =
-        (await findTable(base, ["eventos", "Eventos", "EVENTOS"])) || "eventos";
-
-      const records = await base(tabelaEventos)
+      const records = await base("eventos")
         .select({
           filterByFormula: "IF({destaque_home}=TRUE(), TRUE(), FALSE())",
           sort: [{ field: "data_inicio", direction: "asc" }],
@@ -109,101 +88,57 @@ export default async function handler(req, res) {
         data_inicio: r.fields.data_inicio || "",
         descricao: r.fields.descricao || "",
         imagem:
-          firstImageUrl(r.fields, [
-            "imagem_evento",
-            "Imagem_evento",
-            "imagem",
-          ]) || "/imagens/evento-padrao.jpg",
+          firstImageUrl(r.fields, ["imagem_evento", "Imagem_evento", "imagem"]) ||
+          "/imagens/evento-padrao.jpg",
       }));
 
       return sendJson(res, 200, eventos);
     }
 
     // ============================================================
-    // 💌 /api/cartinhas — lista de cartinhas
+    // 💌 /api/cartinhas
     // ============================================================
     if (pathname === "/api/cartinhas" && method === "GET") {
-      const tabelaCartinhas =
-        (await findTable(base, [
-          "cartinhas",
-          "Cartinhas",
-          "Cartas",
-          "Varal",
-          "Varal Virtual",
-          "varal",
-        ])) || null;
-
-      if (!tabelaCartinhas) {
-        return sendJson(res, 500, {
-          erro: "Tabela de cartinhas não encontrada no Airtable.",
-        });
-      }
-
-      const records = await base(tabelaCartinhas)
-        .select({ sort: [{ field: "nome", direction: "asc" }], maxRecords: 100 })
+      const records = await base("cartinhas")
+        .select({ sort: [{ field: "nome", direction: "asc" }] })
         .all();
 
       const cartinhas = records.map((r) => ({
         id: r.id,
-        nome: r.fields.nome || r.fields.crianca || "Criança",
+        nome: r.fields.nome || "Criança",
         idade: r.fields.idade || "",
-        carta: r.fields.carta || r.fields.mensagem || r.fields.texto || "",
+        carta: r.fields.carta || r.fields.mensagem || "",
         imagem:
-          firstImageUrl(r.fields, [
-            "imagem",
-            "foto",
-            "anexo",
-            "imagem_carta",
-            "scan",
-          ]) || "/imagens/cartinha-padrao.png",
+          firstImageUrl(r.fields, ["imagem", "foto", "anexo"]) ||
+          "/imagens/cartinha-padrao.png",
       }));
 
       return sendJson(res, 200, cartinhas);
     }
 
     // ============================================================
-    // 📍 /api/pontosdecoleta — locais de coleta
+    // 📍 /api/pontosdecoleta
     // ============================================================
     if (pathname === "/api/pontosdecoleta" && method === "GET") {
-      const tabelaPontos =
-        (await findTable(base, [
-          "pontosdecoleta",
-          "Pontos de Coleta",
-          "pontos",
-          "Locais de Coleta",
-        ])) || null;
-
-      if (!tabelaPontos) {
-        return sendJson(res, 500, {
-          erro: "Tabela de pontos de coleta não encontrada no Airtable.",
-        });
-      }
-
-      const records = await base(tabelaPontos)
-        .select({ sort: [{ field: "nome", direction: "asc" }] })
+      const records = await base("pontosdecoleta")
+        .select({ sort: [{ field: "nome_local", direction: "asc" }] })
         .all();
 
       const pontos = records.map((r) => ({
-        id: r.id,
-        nome: r.fields.nome || r.fields.local || "Ponto de Coleta",
+        id: r.fields.id_ponto || r.id,
+        nome: r.fields.nome_local || "Ponto de Coleta",
         endereco: r.fields.endereco || "",
-        cidade: r.fields.cidade || "",
-        estado: r.fields.estado || "",
-        contato: r.fields.contato || "",
-        imagem:
-          firstImageUrl(r.fields, [
-            "imagem",
-            "foto",
-            "anexo",
-            "imagem_ponto",
-          ]) || "/imagens/ponto-padrao.jpg",
+        telefone: r.fields.telefone || "",
+        email: r.fields.email || "",
+        horario_funcionamento: r.fields.horario_funcionamento || "",
+        responsavel: r.fields.responsavel || "",
       }));
 
       return sendJson(res, 200, pontos);
     }
 
     // ============================================================
-    // 🚫 Rota inexistente
+    // 🚫 Rota não encontrada
     // ============================================================
     return sendJson(res, 404, { erro: "Rota não encontrada." });
   } catch (erro) {
