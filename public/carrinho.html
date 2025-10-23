@@ -5,24 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Carrinho | Varal dos Sonhos</title>
 
-  <!-- global style -->
+  <!-- 🌈 Estilos globais -->
   <link rel="stylesheet" href="/public/css/style.css">
   <link rel="stylesheet" href="/public/css/cloudinho.css">
 </head>
 <body>
 
-  <!-- cabeçalho dinâmico (componentes.js) -->
+  <!-- 🌟 Cabeçalho dinâmico -->
   <div id="header"></div>
 
   <main class="container" style="padding-top:120px; padding-bottom:100px;">
     <section class="carrinho-section card">
       <h1>Meu Carrinho</h1>
-      <p class="sub">Revise as cartinhas escolhidas e selecione um ponto de coleta para finalizar a adoção.</p>
+      <p class="sub">
+        Revise as cartinhas escolhidas e selecione um ponto de coleta para finalizar a adoção.
+      </p>
 
-      <!-- Lista de itens do carrinho -->
+      <!-- 💌 Lista de cartinhas -->
       <div id="carrinhoLista" class="carrinho-lista" aria-live="polite"></div>
 
-      <!-- Seleção de ponto de coleta -->
+      <!-- 📍 Seleção de ponto de coleta -->
       <div class="pontos-box">
         <h2>Escolha o ponto de coleta</h2>
         <div id="pontosPlaceholder" class="placeholder">Carregando pontos de coleta…</div>
@@ -31,24 +33,24 @@
           <select id="selectPontos" aria-label="Selecione um ponto de coleta">
             <option value="">-- Selecione um ponto de coleta --</option>
           </select>
-
-          <button id="verNoMapa" class="btn-outline" type="button" disabled>Ver no mapa</button>
-          <div class="obs">É obrigatório selecionar um ponto para finalizar.</div>
+          <button id="verNoMapa" class="btn-outline" type="button" disabled>📍 Ver no mapa</button>
+          <p class="obs">É obrigatório selecionar um ponto para finalizar.</p>
         </div>
       </div>
 
-      <!-- Ações -->
+      <!-- ⚙️ Ações -->
       <div class="acoes">
+        <button id="btnVoltar" class="btn btn-outline">💌 Adotar outra cartinha</button>
         <button id="btnLimpar" class="btn btn-outline">🗑️ Limpar Carrinho</button>
         <button id="btnConfirmar" class="btn btn-primary" disabled>✅ Confirmar Adoção</button>
       </div>
 
-      <!-- pequeno alerta/feedback -->
+      <!-- 🔔 Mensagem de feedback -->
       <div id="feedback" class="feedback hidden"></div>
     </section>
   </main>
 
-  <!-- Modal / iframe do Google Maps -->
+  <!-- 🗺️ Modal / Google Maps -->
   <div id="mapModal" class="map-modal" aria-hidden="true">
     <div class="map-backdrop" id="mapBackdrop"></div>
     <div class="map-frame">
@@ -58,14 +60,20 @@
     </div>
   </div>
 
-  <!-- rodapé dinâmico -->
+  <!-- 🌈 Rodapé dinâmico -->
   <div id="footer"></div>
 
-  <!-- scripts -->
-  
-  <script type="module" src="/public/js/carrinho.js" defer></script>
+  <!-- 💻 Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    // Inicializa EmailJS
+    (function(){
+      emailjs.init("dPZt5JBiJSLejLZgB");
+    })();
+  </script>
+
   <script type="module" src="/public/js/componentes.js" defer></script>
-  <script type="module" src="/public/js/pontosdecoleta.js" defer></script>
   <script type="module" src="/public/js/cloudinho.js" defer></script>
+  <script type="module" src="/public/js/carrinho.js" defer></script>
 </body>
 </html>

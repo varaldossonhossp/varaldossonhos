@@ -1,16 +1,18 @@
 // ============================================================
-// 🛒 VARAL DOS SONHOS — carrinho.js (versão final revisada 2025)
+// 🛒 VARAL DOS SONHOS — carrinho.js (versão revisada 2025)
 // ------------------------------------------------------------
-// Exibe as cartinhas do carrinho, permite selecionar o ponto de coleta,
-// confirmar a adoção e enviar via API + EmailJS.
+// - Exibe cartinhas do carrinho (localStorage)
+// - Permite escolher ponto de coleta (API /api/pontosdecoleta)
+// - Confirma adoção via /api/adocoes + EmailJS
+// - Adiciona botão para adotar mais cartinhas
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
   const carrinhoLista = document.getElementById("carrinhoLista");
   const btnLimpar = document.getElementById("btnLimpar");
   const btnConfirmar = document.getElementById("btnConfirmar");
-  const feedback = document.getElementById("feedback");
   const selectPontos = document.getElementById("selectPontos");
+  const btnVoltar = document.getElementById("btnVoltar"); // 💌 botão "Adotar outra cartinha"
 
   const usuario = JSON.parse(localStorage.getItem("usuario"));
   if (!usuario) {
@@ -22,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 
   // ============================================================
-  // Renderizar carrinho
+  // 🧩 Renderizar carrinho
   // ============================================================
   function renderCarrinho() {
     carrinhoLista.innerHTML = "";
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       div.className = "carrinho-item";
       div.innerHTML = `
         <img src="${item.imagem}" alt="${item.nome}" class="cartinha-foto" />
-        <div>
+        <div class="carrinho-info">
           <h3>${item.nome}</h3>
           <p>${item.sonho}</p>
         </div>
@@ -50,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================================================
-  // Remover item
+  // 🗑️ Remover item do carrinho
   // ============================================================
   carrinhoLista.addEventListener("click", (e) => {
     if (e.target.classList.contains("remover")) {
@@ -62,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // Limpar carrinho
+  // 🧹 Limpar carrinho inteiro
   // ============================================================
   btnLimpar.addEventListener("click", () => {
     if (confirm("Deseja realmente limpar o carrinho?")) {
@@ -73,27 +75,41 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // Carregar pontos de coleta
+  // 📍 Carregar pontos de coleta
   // ============================================================
   async function carregarPontos() {
     try {
-      const resp = await fetch("/api/pontosdecoleta");
+      const baseURL = window.location.hostname.includes("vercel.app")
+        ? ""
+        : "https://varaldossonhos-sp.vercel.app";
+
+      const resp = await fetch(`${baseURL}/api/pontosdecoleta`);
+      if (!resp.ok) throw new Error("Falha ao carregar pontos de coleta");
       const pontos = await resp.json();
+
       selectPontos.innerHTML = '<option value="">Selecione um ponto de coleta</option>';
+
+      if (!Array.isArray(pontos) || pontos.length === 0) {
+        selectPontos.innerHTML = '<option value="">Nenhum ponto disponível</option>';
+        return;
+      }
+
       pontos.forEach((p) => {
         const opt = document.createElement("option");
-        opt.value = p.nome_local;
-        opt.textContent = `${p.nome_local} — ${p.endereco}`;
+        const nome = p.nome_local || p.nome || "Ponto";
+        const endereco = p.endereco || "";
+        opt.value = nome;
+        opt.textContent = `${nome} — ${endereco}`;
         selectPontos.appendChild(opt);
       });
     } catch (err) {
-      console.error("Erro ao carregar pontos:", err);
-      alert("⚠️ Não foi possível carregar os pontos de coleta.");
+      console.error("❌ Erro ao buscar pontos de coleta:", err);
+      selectPontos.innerHTML = '<option value="">Erro ao carregar pontos</option>';
     }
   }
 
   // ============================================================
-  // Confirmar adoção (envia para Airtable + EmailJS)
+  // 💌 Confirmar adoção (envia para API + EmailJS)
   // ============================================================
   btnConfirmar.addEventListener("click", async () => {
     if (!selectPontos.value) {
@@ -136,13 +152,25 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.removeItem("carrinho");
       window.location.href = "index.html";
     } catch (erro) {
-      console.error("Erro ao confirmar adoção:", erro);
-      alert("❌ Falha ao enviar adoção. Tente novamente mais tarde.");
+      console.error("❌ Erro ao confirmar adoção:", erro);
+      alert("Erro ao confirmar adoção. Tente novamente mais tarde.");
       btnConfirmar.disabled = false;
       btnConfirmar.textContent = "✅ Confirmar Adoção";
     }
   });
 
+  // ============================================================
+  // ↩️ Botão “Adotar outra cartinha”
+  // ============================================================
+  if (btnVoltar) {
+    btnVoltar.addEventListener("click", () => {
+      window.location.href = "cartinhas.html";
+    });
+  }
+
+  // ============================================================
+  // 🚀 Inicialização
+  // ============================================================
   carregarPontos();
   renderCarrinho();
 });
