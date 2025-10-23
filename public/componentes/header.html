@@ -1,0 +1,54 @@
+<!-- ============================================================
+ 💙 VARAL DOS SONHOS — COMPONENTE HEADER
+ ------------------------------------------------------------
+ Cabeçalho global fixo com menu de navegação e status de login.
+ Compatível com:
+  - Vercel (deploy web)
+  - .NET MAUI (WebView híbrida)
+  - Airtable (via API centralizada /api/index.js)
+  - EmailJS (envio de mensagens)
+ ------------------------------------------------------------
+  🔄 Atualizações aplicadas:
+   • Links de navegação otimizados para funcionar no MAUI WebView.
+   • Mantido layout original (classes e estilos).
+   • Login/logout sincronizados via js/componentes.js.
+   • Removida qualquer dependência antiga de /api/cloudinho.js.
+ ============================================================ -->
+
+<header class="site-header" role="banner">
+  <div class="container nav">
+    <!-- 🔹 Marca principal -->
+    <a href="index.html" class="brand" aria-label="Página inicial - Varal dos Sonhos">
+      <span class="brand-badge">Varal Virtual</span>
+    </a>
+
+    <!-- 🔹 Menu principal -->
+    <nav class="menu" aria-label="Menu principal">
+      <!-- 🔗 Navegação interna (corrigida para compatibilidade MAUI/Vercel) -->
+      <a href="index.html" class="menu-link">Início</a>
+      <a href="cartinhas.html" class="menu-link">Varal Virtual</a>
+      <a href="pontosdecoleta.html" class="menu-link">Pontos de Coleta</a>
+      <a href="carrinho.html" class="menu-link">Carrinho</a>
+
+      <!-- 🔗 Acesso e autenticação -->
+      <a href="cadastro.html" class="btn btn-outline">Cadastro</a>
+      <a id="loginLink" href="login.html" class="btn btn-outline">Login</a>
+
+      <!-- 👤 Usuário logado e logout dinâmico -->
+      <span id="usuarioNome" class="usuario-logado" style="display: none;"></span>
+      <button id="btnLogout" class="btn btn-outline btn-sair" style="display: none;">Sair</button>
+    </nav>
+  </div>
+</header>
+
+<!-- 🔧 Espaçamento estrutural (evita sobreposição por header fixo) -->
+<div class="header-spacer" aria-hidden="true"></div>
+
+<!-- ============================================================
+ 🧭 Observações técnicas:
+  - Todos os links são relativos e corrigidos automaticamente
+    via função corrigirLinksRelativos() em js/componentes.js.
+  - O botão “Sair” limpa o localStorage e redireciona para index.html.
+  - Cloudinho agora é injetado dinamicamente (sem arquivo .html dedicado).
+  - Nenhum fetch ou API é executado aqui — apenas markup.
+ ============================================================ -->
