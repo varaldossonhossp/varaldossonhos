@@ -226,7 +226,7 @@ input:focus, select:focus, textarea:focus {
 /* ============================================================
  💌 CARTINHAS (Atualizado 2025)
 ============================================================ */
-.varal-section { text-align: center; margin-top: 100px; }
+.varal-section { text-align: center; margin-top: 100px; padding-bottom: 120px; }
 
 .varal-section h1 {
   font-family: var(--fonte-titulo);
@@ -269,6 +269,10 @@ input:focus, select:focus, textarea:focus {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding: 6px 4px 18px;
+  scrollbar-gutter: stable both-edges;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
 }
 .cartinhas-lista::-webkit-scrollbar { height: 8px; }
 .cartinhas-lista::-webkit-scrollbar-thumb {
@@ -277,6 +281,10 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ===== Card pendurado ===== */
+@keyframes swing {
+  0% { transform: rotate(-1.2deg); }
+  100% { transform: rotate(1.2deg); }
+}
 .card-cartinha {
   position: relative;
   background: #fff;
@@ -285,9 +293,15 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--sombra);
   padding: 12px 12px 14px;
   scroll-snap-align: start;
+  transform-origin: top center;
+  animation: swing 3.2s ease-in-out infinite alternate;
   transition: transform .25s ease, box-shadow .25s ease;
 }
-.card-cartinha:hover { transform: translateY(-4px); }
+.card-cartinha:hover {
+  animation-play-state: paused;
+  transform: rotate(1deg) translateY(-4px);
+  box-shadow: 0 10px 22px rgba(0, 51, 102, .16);
+}
 
 .card-cartinha .prendedor {
   position: absolute;
@@ -319,8 +333,13 @@ input:focus, select:focus, textarea:focus {
   background: #fff;
 }
 
-.card-cartinha h3 { margin: 10px 0 0; color: var(--azul-escuro); }
-.card-cartinha p { margin: 4px 0; font-size: .95rem; }
+.card-cartinha h3 {
+  margin: 10px 0 0;
+  color: var(--azul-escuro);
+  font-family: var(--fonte-titulo);
+  letter-spacing: .2px;
+}
+.card-cartinha p { margin: 4px 0; font-size: .95rem; color: #244269; line-height: 1.35; }
 .card-cartinha p strong { color: var(--azul-escuro); }
 
 .btn-adotar {
@@ -330,15 +349,24 @@ input:focus, select:focus, textarea:focus {
   border-radius: 10px; font-weight: 700;
   cursor: pointer;
   transition: transform .15s ease, background .15s ease;
+  box-shadow: 0 6px 14px rgba(74, 144, 226, .18);
 }
 .btn-adotar:hover { background: var(--azul-escuro); transform: translateY(-1px); }
+.btn-adotar:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(74,144,226,.22);
+}
 
 /* ===== Modal de Zoom ===== */
 .zoom-modal { position: fixed; inset: 0; display: none; z-index: 1100; }
-.zoom-modal.is-open { display: block; }
+.zoom-modal.is-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .zoom-backdrop { position: absolute; inset:0; background: rgba(0,0,0,.6); backdrop-filter: blur(1px); }
 .zoom-figure { position: relative; max-width: min(720px, 92vw); margin: 6vh auto 0; padding: 0; }
-.zoom-figure img { width: 100%; border-radius: 12px; background: #fff; }
+.zoom-figure img { width: 100%; border-radius: 12px; background: #fff; max-height: 78vh; object-fit: contain; }
 .zoom-figure figcaption { margin-top: 8px; color:#fff; text-align: center; }
 .zoom-close {
   position: absolute; top:-10px; right:-10px;
@@ -346,6 +374,7 @@ input:focus, select:focus, textarea:focus {
   border-radius:50%; cursor:pointer; font-size:1.1rem;
   box-shadow: var(--sombra);
 }
+
 
 /* ============================================================
  6️⃣ ☁️ CLOUDINHO — Mascote Interativo
@@ -394,13 +423,12 @@ input:focus, select:focus, textarea:focus {
   .cloudinho-img { width: 70px; }
   .cloudinho-bubble { font-size: 14px; max-width: 200px; }
   .cartinhas-lista { grid-auto-columns: 78vw; }
+  .card-cartinha .avatar { bottom: 108px; width: 52px; height: 52px; }
 }
 
 @media (max-width: 480px) {
   .brand-badge { font-size: 0.85rem; }
   .btn-primary { font-size: 15px; padding: 10px; }
   .footer-grid { flex-direction: column; gap: 6px; }
+  .varal-section { padding-bottom: 140px; }
 }
-
-/* 🔧 Correção de espaçamento */
-.hero, .strip { padding-bottom: 80px; }
