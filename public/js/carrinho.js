@@ -1,14 +1,16 @@
 // ============================================================
-// 🛒 VARAL DOS SONHOS — carrinho.js (versão final revisada)
+// 🛒 VARAL DOS SONHOS — carrinho.js (versão estável e revisada)
 // ------------------------------------------------------------
 // ✅ Exibe cartinhas do carrinho
-// ✅ Carrega pontos de coleta do Airtable (via /api/pontosdecoleta)
-// ✅ Habilita botão ao escolher ponto
+// ✅ Carrega pontos de coleta (API /api/pontosdecoleta)
+// ✅ Habilita botão ao selecionar ponto
 // ✅ Envia adoção (API + EmailJS)
 // ✅ Cloudinho animado 💙
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 carrinho.js carregado com sucesso!");
+
   const carrinhoLista = document.getElementById("carrinhoLista");
   const btnLimpar = document.getElementById("btnLimpar");
   const btnConfirmar = document.getElementById("btnConfirmar");
@@ -84,7 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ============================================================
   async function carregarPontos() {
     pontosPlaceholder.textContent = "Carregando pontos de coleta...";
-    selectPontos.innerHTML = "";
 
     try {
       const baseURL = window.location.hostname.includes("vercel.app")
@@ -95,8 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
       const pontos = await resp.json();
-      if (!Array.isArray(pontos) || pontos.length === 0)
-        throw new Error("Sem pontos cadastrados.");
+      console.log("📦 Pontos recebidos:", pontos);
 
       preencherSelect(pontos);
     } catch (err) {
@@ -125,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     pontosPlaceholder.textContent = "";
+    document.getElementById("pontosControls").classList.remove("hidden");
     verificarBotaoConfirmar();
   }
 
@@ -135,10 +136,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const temPonto = !!selectPontos.value;
     const temCartinha = carrinho.length > 0;
 
+    console.log("🧩 Verificando:", { temPonto, temCartinha, valor: selectPontos.value });
+
     if (temPonto && temCartinha) {
       btnConfirmar.disabled = false;
       btnConfirmar.style.opacity = "1";
       btnConfirmar.style.cursor = "pointer";
+      console.log("✅ Botão habilitado!");
     } else {
       btnConfirmar.disabled = true;
       btnConfirmar.style.opacity = "0.6";
@@ -146,7 +150,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  selectPontos.addEventListener("change", verificarBotaoConfirmar);
+  selectPontos.addEventListener("change", () => {
+    console.log("📍 Mudou ponto:", selectPontos.value);
+    verificarBotaoConfirmar();
+  });
 
   // ============================================================
   // 🗺️ Ver ponto no mapa
@@ -208,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!resposta.ok)
           throw new Error(resultado.erro || "Erro ao registrar adoção.");
 
-        // 💙 E-mail de confirmação via EmailJS
+        // 💙 Envia e-mail via EmailJS
         await emailjs.send("service_uffgnhx", "template_4yfc899", {
           to_name: usuario.nome,
           to_email: usuario.email,
@@ -241,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
     popup.className = "cloudinho-popup";
     popup.innerHTML = `
       <div class="cloudinho-popup-inner">
-        <img src="imagens/cloudinho.png" alt="Cloudinho" class="cloudinho-popup-img">
+        <img src="/public/imagens/cloudinho.png" alt="Cloudinho" class="cloudinho-popup-img">
         <div>
           <h3>💙 Adoção Confirmada!</h3>
           <p>Obrigado por espalhar amor e realizar sonhos!</p>
