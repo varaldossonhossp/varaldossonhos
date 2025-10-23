@@ -1,5 +1,5 @@
 // ============================================================
-// 💌 VARAL DOS SONHOS — cartinhas.js (versão com cards animados)
+// 💌 VARAL DOS SONHOS — cartinhas.js (versão corrigida 2025)
 // ------------------------------------------------------------
 // Exibe as cartinhas do Airtable com visual de "varal" e modal zoom
 // ============================================================
@@ -7,7 +7,8 @@
 document.addEventListener("DOMContentLoaded", carregarCartinhas);
 
 async function carregarCartinhas() {
-  const container = document.querySelector(".varal-cartinhas");
+  // 🔧 Seletor atualizado — compatível com o novo CSS
+  const container = document.querySelector(".cartinhas-lista") || document.querySelector(".varal-cartinhas");
   if (!container) return;
 
   try {
@@ -33,14 +34,13 @@ async function carregarCartinhas() {
       const imagem = carta.imagem || "imagens/cartinha-padrao.png";
 
       const card = document.createElement("div");
-      card.className = "cartinha-card";
+      card.className = "card-cartinha";
       card.innerHTML = `
-        <div class="cartinha-imagem" onclick="abrirModal('${imagem}', '${nome}', '${sonho}')">
-          <img src="${imagem}" alt="Cartinha de ${nome}" loading="lazy">
-        </div>
+        <img class="prendedor" src="imagens/prendedor.png" alt="Prendedor">
+        <img class="carta" src="${imagem}" alt="Cartinha de ${nome}" loading="lazy" onclick="abrirModal('${imagem}', '${nome}', '${sonho}')">
         <div class="cartinha-info">
           <h3>${nome}</h3>
-          <p><strong>Idade:</strong> ${idade}</p>
+          ${idade ? `<p><strong>Idade:</strong> ${idade}</p>` : ""}
           <p><strong>Sonho:</strong> ${sonho}</p>
           <button class="btn-adotar">💙 Adotar</button>
         </div>
@@ -58,14 +58,14 @@ async function carregarCartinhas() {
 // ============================================================
 function abrirModal(imagem, nome, sonho) {
   const modal = document.createElement("div");
-  modal.className = "modal-cartinha";
+  modal.className = "zoom-modal is-open";
   modal.innerHTML = `
-    <div class="modal-conteudo">
-      <span class="fechar" onclick="this.parentElement.parentElement.remove()">×</span>
+    <div class="zoom-backdrop" onclick="this.parentElement.remove()"></div>
+    <figure class="zoom-figure">
+      <button class="zoom-close" onclick="this.parentElement.parentElement.remove()">×</button>
       <img src="${imagem}" alt="Cartinha de ${nome}">
-      <h2>${nome}</h2>
-      <p>${sonho}</p>
-    </div>
+      <figcaption>${nome} — ${sonho}</figcaption>
+    </figure>
   `;
   document.body.appendChild(modal);
 }
