@@ -1,66 +1,49 @@
 // ============================================================
-// 💌 VARAL DOS SONHOS — /api/lib/enviarEmail.js
+// 💙 VARAL DOS SONHOS — enviarEmail.js (versão segura para Vercel)
 // ------------------------------------------------------------
-// Integração com EmailJS (real ou simulada)
-// ------------------------------------------------------------
-// Variáveis de ambiente (na Vercel):
-//   EMAILJS_SERVICE_ID=service_uffgnhx
-//   EMAILJS_TEMPLATE_ID=template_4yfc899
-//   EMAILJS_USER_ID=dPZt5JBiJSLejLZgB
+// Envia e-mails via EmailJS (no browser) ou simula no ambiente serverless
 // ============================================================
 
-import fetch from "node-fetch";
+import emailjs from "@emailjs/browser";
 
-export default async function enviarEmail(destinatario, assunto, mensagem, pontuacao = 0) {
-  const SERVICE_ID = process.env.EMAILJS_SERVICE_ID || "service_uffgnhx";
-  const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || "template_4yfc899";
-  const USER_ID = process.env.EMAILJS_USER_ID || "dPZt5JBiJSLejLZgB";
-
-  if (!SERVICE_ID || !TEMPLATE_ID || !USER_ID) {
-    console.warn("⚠️ EmailJS não configurado. Envio será simulado.");
-    console.log("📧 SIMULAÇÃO DE E-MAIL:");
-    console.log("Destinatário:", destinatario);
-    console.log("Assunto:", assunto);
-    console.log("Mensagem:", mensagem);
-    if (pontuacao > 0) console.log(`✨ Pontuação: +${pontuacao} pontos`);
-    return { status: "simulado", mensagem: "Envio simulado (modo teste)." };
-  }
-
-  let mensagemFinal = mensagem;
-  if (pontuacao > 0) {
-    mensagemFinal += `\n\n🏅 Você ganhou ${pontuacao} ponto${
-      pontuacao > 1 ? "s" : ""
-    } por esta adoção! 💙 Continue espalhando sonhos!`;
-  }
-
-  const payload = {
-    service_id: SERVICE_ID,
-    template_id: TEMPLATE_ID,
-    user_id: USER_ID,
-    template_params: {
-      to_email: destinatario,
-      subject: assunto,
-      message: mensagemFinal,
-    },
-  };
-
+// ============================================================
+// 🔧 Função principal
+// ============================================================
+export default async function enviarEmail(destinatario, assunto, mensagem, diasPrazo = 7) {
   try {
-    const res = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    // Detecta se está rodando no navegador (cliente)
+    const isBrowser = typeof window !== "undefined";
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("❌ Falha ao enviar e-mail:", errText);
-      throw new Error(errText);
+    // 🚫 Se estiver em ambiente serverless (ex: Vercel API), apenas loga
+    if (!isBrowser) {
+      console.log("📭 Ambiente serverless detectado — e-mail não será enviado.");
+      console.log(`Simulação: Enviar para ${destinatario} | Assunto: ${assunto}`);
+      console.log("Mensagem:", mensagem);
+      return {
+        ok: true,
+        simulated: true,
+        mensagem: "E-mail simulado (modo servidor).",
+      };
     }
 
-    console.log(`✅ E-mail enviado com sucesso para ${destinatario}`);
-    return { status: "ok", mensagem: "E-mail enviado com sucesso via EmailJS." };
+    // 📨 Se for navegador (teste local), usa EmailJS normalmente
+    const serviceID = process.env.EMAILJS_SERVICE_ID || "service_uffgnhx";
+    const templateID = process.env.EMAILJS_TEMPLATE_ID || "template_4yfc899";
+    const publicKey = process.env.EMAILJS_PUBLIC_KEY || "dPZt5JBiJSLejLZgB";
+
+    const templateParams = {
+      to_email: destinatario,
+      subject: assunto,
+      message: mensagem,
+      prazo: `${diasPrazo} dias`,
+    };
+
+    await emailjs.send(serviceID, templateID, templateParams, publicKey);
+
+    console.log(`📨 E-mail enviado com sucesso para ${destinatario}!`);
+    return { ok: true };
   } catch (erro) {
-    console.error("❌ Erro no envio de e-mail:", erro);
-    return { status: "erro", mensagem: "Falha ao enviar e-mail: " + erro.message };
+    console.error("❌ Erro no envio de e-mail:", erro.message);
+    return { ok: false, erro: erro.message };
   }
 }
