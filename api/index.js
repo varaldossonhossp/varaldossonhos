@@ -159,20 +159,20 @@ export default async function handler(req, res) {
 
         const dataAtual = new Date().toLocaleDateString("pt-BR");
 
-        // Cria registro na tabela de doações
+        // ✅ Corrigido: ponto_coleta convertido para texto simples
         const novoRegistro = await base("doacoes").create([
           {
             fields: {
               doador,
               cartinha,
-              ponto_coleta,
+              ponto_coleta: `${ponto_coleta}`, // impede erro de select
               status_doacao: "confirmado",
               mensagem_confirmacao: `💙 Adoção confirmada em ${dataAtual}`,
             },
           },
         ]);
 
-        // Atualiza status da cartinha para "adotada"
+        // 🔄 Atualiza status da cartinha para "adotada"
         try {
           const cartinhaRecord = await base("cartinhas")
             .select({
@@ -190,7 +190,7 @@ export default async function handler(req, res) {
           console.warn("⚠️ Erro ao atualizar status da cartinha:", erro.message);
         }
 
-        // Envia e-mail de confirmação
+        // 📧 Envio de e-mail
         const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
         const mensagem = `
 Olá ${doador},
