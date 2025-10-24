@@ -166,7 +166,7 @@ export default async function handler(req, res) {
             fields: {
               doador: String(doador),
               cartinha: String(cartinha),
-              ponto_coleta_texto: String(ponto_coleta),
+              ponto_coleta: String(ponto_coleta),
               status_doacao: statusValido,
               mensagem_confirmacao: `💙 Adoção confirmada em ${dataAtual}`,
             },
