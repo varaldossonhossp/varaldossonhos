@@ -1,8 +1,5 @@
 // ============================================================
 // 💌 VARAL DOS SONHOS — cartinhas.js (versão final revisada 2025)
-// ------------------------------------------------------------
-// Exibe as cartinhas do Airtable com visual de "varal" e modal zoom.
-// Permite adicionar ao carrinho (localStorage) e acessar o carrinho
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", carregarCartinhas);
@@ -22,13 +19,10 @@ async function carregarCartinhas() {
     const cartinhas = await resposta.json();
     container.innerHTML = "";
 
-    // 🔹 Mostra apenas as cartinhas com status "disponível"
-    const disponiveis = cartinhas.filter(c => 
-        c.status && c.status.toLowerCase() === "disponível"
-    );
+    // 🔹 Exibe apenas as cartinhas com status "disponível"
+    const disponiveis = cartinhas.filter(c => c.status?.toLowerCase() === "disponível");
 
-
-    if (cartinhas.length === 0) {
+    if (disponiveis.length === 0) {
       container.innerHTML = "<p>Nenhuma cartinha disponível no momento 💌</p>";
       return;
     }
@@ -79,7 +73,6 @@ document.addEventListener("click", (e) => {
       return;
     }
 
-    // Adiciona ao carrinho (localStorage)
     let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
     const jaExiste = carrinho.some((c) => c.id === id);
     if (jaExiste) {

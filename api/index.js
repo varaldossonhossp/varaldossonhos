@@ -158,7 +158,6 @@ export default async function handler(req, res) {
 
         const dataAtual = new Date().toLocaleDateString("pt-BR");
 
-        // ✅ Corrigido para usar o status certo do Airtable
         const statusValido = "confirmada";
 
         const novoRegistro = await base("doacoes").create([
@@ -174,7 +173,7 @@ export default async function handler(req, res) {
         ]);
 
         try {
-          // 🔎 Corrigido: usa o campo id_cartinha para localizar e atualizar
+          // 🔎 Correção definitiva — busca pela coluna id_cartinha
           const cartinhaRecord = await base("cartinhas")
             .select({
               filterByFormula: `{id_cartinha}='${cartinha}'`,
@@ -194,7 +193,6 @@ export default async function handler(req, res) {
         } catch (erro) {
           console.error("❌ Erro ao atualizar status da cartinha:", erro);
         }
-
 
         const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
         const mensagem = `
@@ -243,9 +241,6 @@ Obrigado por espalhar amor e realizar sonhos! 💙
       });
     }
 
-    // ============================================================
-    // Rota não encontrada
-    // ============================================================
     return sendJson(res, 404, { erro: "Rota não encontrada." });
   } catch (erro) {
     console.error("❌ Erro interno:", erro);
