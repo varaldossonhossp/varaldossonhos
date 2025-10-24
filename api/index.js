@@ -179,11 +179,12 @@ export default async function handler(req, res) {
           },
         ]);
 
-        // ✅ Atualiza status da cartinha correspondente
+                // ✅ Atualiza status da cartinha correspondente
         try {
+          // Filtra pelo campo id_cartinha (como está na sua tabela)
           const cartinhaRecord = await base("cartinhas")
             .select({
-              filterByFormula: `OR({id_cartinha}='${cartinha}', RECORD_ID()='${cartinha}')`,
+              filterByFormula: `{id_cartinha}='${cartinha}'`,
               maxRecords: 1,
             })
             .firstPage();
@@ -193,7 +194,7 @@ export default async function handler(req, res) {
             await base("cartinhas").update([
               {
                 id: registroId,
-                fields: { status: ["adotada"] }, // 👈 campo multiseleção exige array
+                fields: { status: ["adotada"] },
               },
             ]);
             console.log(`✅ Cartinha ${cartinha} atualizada para "adotada".`);
@@ -203,6 +204,7 @@ export default async function handler(req, res) {
         } catch (erro) {
           console.error("❌ Erro ao atualizar status da cartinha:", erro);
         }
+
 
         // ✅ Envio do e-mail de confirmação
         const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
