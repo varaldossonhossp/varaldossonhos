@@ -1,5 +1,5 @@
 // ============================================================
-// 💙 VARAL DOS SONHOS — /api/index.js (versão final revisada)
+// 💙 VARAL DOS SONHOS — /api/index.js (versão final revisada 2025)
 // ------------------------------------------------------------
 // API única — compatível com o plano gratuito da Vercel
 // ------------------------------------------------------------
@@ -146,7 +146,7 @@ export default async function handler(req, res) {
     }
 
     // ============================================================
-    // 💌 /api/adocoes — registrar adoção (corrigido 100%)
+    // 💌 /api/adocoes — registrar adoção (corrigido final 2025)
     // ============================================================
     if (pathname === "/api/adocoes" && method === "POST") {
       try {
@@ -156,27 +156,34 @@ export default async function handler(req, res) {
           return sendJson(res, 400, { erro: "Campos obrigatórios ausentes." });
         }
 
-        const dataAtual = new Date().toLocaleDateString("pt-BR");
+        const dataAtual = new Date();
+        const dataFormatada = dataAtual.toLocaleDateString("pt-BR");
 
-        const statusValido = "confirmada";
+        // 🧩 Gera automaticamente o ID de doação sequencial (ex: d001, d002...)
+        const registrosExistentes = await base("doacoes").select().all();
+        const novoNumero = registrosExistentes.length + 1;
+        const id_doacao = `d${String(novoNumero).padStart(3, "0")}`;
 
+        // ✅ Cria novo registro de doação
         const novoRegistro = await base("doacoes").create([
           {
             fields: {
+              id_doacao: id_doacao,
               doador: String(doador),
               cartinha: String(cartinha),
               ponto_coleta: String(ponto_coleta),
-              status_doacao: statusValido,
-              mensagem_confirmacao: `💙 Adoção confirmada em ${dataAtual}`,
+              data_doacao: dataFormatada,
+              status_doacao: "confirmada",
+              mensagem_confirmacao: `💙 Adoção confirmada em ${dataFormatada}`,
             },
           },
         ]);
 
+        // ✅ Atualiza status da cartinha correspondente
         try {
-          // 🔎 Correção definitiva — busca pela coluna id_cartinha
           const cartinhaRecord = await base("cartinhas")
             .select({
-              filterByFormula: `{id_cartinha}='${cartinha}'`,
+              filterByFormula: `OR({id_cartinha}='${cartinha}', RECORD_ID()='${cartinha}')`,
               maxRecords: 1,
             })
             .firstPage();
@@ -194,6 +201,7 @@ export default async function handler(req, res) {
           console.error("❌ Erro ao atualizar status da cartinha:", erro);
         }
 
+        // ✅ Envio do e-mail de confirmação
         const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
         const mensagem = `
 Olá ${doador},
@@ -210,7 +218,7 @@ Obrigado por espalhar amor e realizar sonhos! 💙
 
         return sendJson(res, 201, {
           ok: true,
-          id: novoRegistro[0].id,
+          id_doacao,
           mensagem: "Adoção registrada e e-mail enviado com sucesso.",
         });
       } catch (erro) {
@@ -241,6 +249,9 @@ Obrigado por espalhar amor e realizar sonhos! 💙
       });
     }
 
+    // ============================================================
+    // Rota não encontrada
+    // ============================================================
     return sendJson(res, 404, { erro: "Rota não encontrada." });
   } catch (erro) {
     console.error("❌ Erro interno:", erro);
