@@ -22,12 +22,18 @@ async function carregarCartinhas() {
     const cartinhas = await resposta.json();
     container.innerHTML = "";
 
+    // 🔹 Mostra apenas as cartinhas com status "disponível"
+    const disponiveis = cartinhas.filter(c => 
+        c.status && c.status.toLowerCase() === "disponível"
+    );
+
+
     if (cartinhas.length === 0) {
       container.innerHTML = "<p>Nenhuma cartinha disponível no momento 💌</p>";
       return;
     }
 
-    cartinhas.forEach((carta) => {
+    disponiveis.forEach((carta) => {
       const nome = (carta.nome || "").split(" ")[0];
       const idade = carta.idade ? `${carta.idade} anos` : "";
       const sonho = carta.sonho || "Sonho não informado 💭";

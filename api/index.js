@@ -174,21 +174,27 @@ export default async function handler(req, res) {
         ]);
 
         try {
+          // 🔎 Corrigido: usa o campo id_cartinha para localizar e atualizar
           const cartinhaRecord = await base("cartinhas")
             .select({
-              filterByFormula: `{nome_crianca}='${cartinha}'`,
+              filterByFormula: `{id_cartinha}='${cartinha}'`,
               maxRecords: 1,
             })
             .firstPage();
 
           if (cartinhaRecord.length > 0) {
+            const registroId = cartinhaRecord[0].id;
             await base("cartinhas").update([
-              { id: cartinhaRecord[0].id, fields: { status: "adotada" } },
+              { id: registroId, fields: { status: "adotada" } },
             ]);
+            console.log(`✅ Cartinha ${cartinha} atualizada para "adotada".`);
+          } else {
+            console.warn(`⚠️ Nenhuma cartinha encontrada com id_cartinha='${cartinha}'.`);
           }
         } catch (erro) {
-          console.warn("⚠️ Erro ao atualizar status da cartinha:", erro.message);
+          console.error("❌ Erro ao atualizar status da cartinha:", erro);
         }
+
 
         const assunto = "💙 Adoção Confirmada | Varal dos Sonhos";
         const mensagem = `
