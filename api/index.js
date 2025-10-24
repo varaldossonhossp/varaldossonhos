@@ -179,39 +179,39 @@ export default async function handler(req, res) {
           },
         ]);
 
-    // ✅ Atualiza status da cartinha correspondente (debug detalhado)
-    try {
-      console.log(`🔎 Tentando atualizar cartinha: ${cartinha}`);
+  // ✅ Atualiza status da cartinha correspondente (debug detalhado)
+  try {
+    console.log(`🔎 Tentando atualizar cartinha: ${cartinha}`);
 
-      const cartinhaRecord = await base("cartinhas")
-        .select({
-          filterByFormula: `TRIM({id_cartinha})='${cartinha.trim()}'`,
-          maxRecords: 1,
-        })
-        .firstPage();
+    const cartinhaRecord = await base("cartinhas")
+      .select({
+        filterByFormula: `TRIM({id_cartinha})='${cartinha.trim()}'`,
+        maxRecords: 1,
+      })
+      .firstPage();
 
-      console.log(`📦 Registros encontrados: ${cartinhaRecord.length}`);
+    console.log(`📦 Registros encontrados: ${cartinhaRecord.length}`);
 
-      if (cartinhaRecord.length > 0) {
-        const registroId = cartinhaRecord[0].id;
-        console.log(`🆔 ID interno Airtable: ${registroId}`);
+    if (cartinhaRecord.length > 0) {
+      const registroId = cartinhaRecord[0].id;
+      console.log(`🆔 ID interno Airtable: ${registroId}`);
 
-        const resultadoUpdate = await base("cartinhas").update([
-          {
-            id: registroId,
-            fields: {
-              status: "adotada", // 👈 testamos string simples primeiro
-            },
+      const resultadoUpdate = await base("cartinhas").update([
+        {
+          id: registroId,
+          fields: {
+            status: "adotada", // 👈 testamos string simples primeiro
           },
-        ]);
+        },
+      ]);
 
-        console.log("✅ Resultado do update:", resultadoUpdate[0].fields.status);
-      } else {
-        console.warn(`⚠️ Nenhuma cartinha encontrada com id_cartinha='${cartinha}'.`);
-      }
-    } catch (erro) {
-      console.error("❌ Erro ao atualizar status da cartinha:", erro);
+      console.log("✅ Resultado do update:", resultadoUpdate[0].fields.status);
+    } else {
+      console.warn(`⚠️ Nenhuma cartinha encontrada com id_cartinha='${cartinha}'.`);
     }
+  } catch (erro) {
+    console.error("❌ Erro ao atualizar status da cartinha:", erro);
+  }
 
 
         // ✅ Envio do e-mail de confirmação
