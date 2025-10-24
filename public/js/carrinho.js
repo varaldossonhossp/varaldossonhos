@@ -1,11 +1,11 @@
 // ============================================================
-// 🛒 VARAL DOS SONHOS — carrinho.js (versão final 2025)
+// 🛒 VARAL DOS SONHOS — carrinho.js (versão revisada e funcional)
 // ------------------------------------------------------------
 // ✅ Exibe cartinhas do carrinho
-// ✅ Carrega pontos de coleta do Airtable (via /api/pontosdecoleta)
+// ✅ Carrega pontos de coleta via /api/pontosdecoleta
 // ✅ Habilita botão ao escolher ponto
 // ✅ Envia adoção (API + EmailJS)
-// ✅ Cloudinho animado 💙
+// ✅ Mostra Cloudinho de sucesso 💙
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // 📍 Carregar pontos de coleta
+  // 📍 Carregar pontos de coleta (com logs de depuração)
   // ============================================================
   async function carregarPontos() {
     pontosPlaceholder.textContent = "Carregando pontos de coleta...";
@@ -91,17 +91,20 @@ document.addEventListener("DOMContentLoaded", () => {
         ? ""
         : "https://varaldossonhos.vercel.app";
 
+      console.log("🌐 Buscando pontos em:", `${baseURL}/api/pontosdecoleta`);
       const resp = await fetch(`${baseURL}/api/pontosdecoleta`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
       const pontos = await resp.json();
+      console.log("📍 Pontos recebidos:", pontos);
+
       if (!Array.isArray(pontos) || pontos.length === 0)
-        throw new Error("Sem pontos cadastrados.");
+        throw new Error("Nenhum ponto encontrado.");
 
       preencherSelect(pontos);
     } catch (err) {
-      console.error("❌ Erro ao buscar pontos de coleta:", err);
-      pontosPlaceholder.textContent = "Erro ao carregar pontos.";
+      console.error("❌ Erro ao carregar pontos:", err);
+      pontosPlaceholder.textContent = "Erro ao carregar pontos de coleta.";
     }
   }
 
@@ -125,27 +128,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     pontosPlaceholder.textContent = "";
+    document.getElementById("pontosControls").classList.remove("hidden");
     verificarBotaoConfirmar();
   }
 
   // ============================================================
-  // 🧩 Habilita o botão Confirmar quando possível
+  // 🧩 Habilita o botão Confirmar
   // ============================================================
   function verificarBotaoConfirmar() {
     const temPonto = !!selectPontos.value;
     const temCartinha = carrinho.length > 0;
-
-    if (temPonto && temCartinha) {
-      btnConfirmar.disabled = false;
-      btnConfirmar.style.opacity = "1";
-      btnConfirmar.style.cursor = "pointer";
-    } else {
-      btnConfirmar.disabled = true;
-      btnConfirmar.style.opacity = "0.6";
-      btnConfirmar.style.cursor = "not-allowed";
-    }
+    btnConfirmar.disabled = !(temPonto && temCartinha);
+    btnConfirmar.style.opacity = btnConfirmar.disabled ? "0.6" : "1";
+    btnConfirmar.style.cursor = btnConfirmar.disabled ? "not-allowed" : "pointer";
   }
-
   selectPontos.addEventListener("change", verificarBotaoConfirmar);
 
   // ============================================================
@@ -153,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ============================================================
   verNoMapa.addEventListener("click", () => {
     const val = selectPontos.value;
-    if (!val) return alert("Selecione um ponto de coleta primeiro.");
+    if (!val) return alert("Selecione um ponto primeiro.");
     const ponto = JSON.parse(val);
     window.open(
       `https://www.google.com/maps/search/${encodeURIComponent(ponto.endereco)}`,
@@ -162,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ============================================================
-  // 💌 Confirmar adoção (envia API + e-mail)
+  // 💌 Confirmar adoção
   // ============================================================
   btnConfirmar.addEventListener("click", async () => {
     const pontoSelecionado = selectPontos.value
@@ -189,7 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
       for (const carta of carrinho) {
         console.log("📨 Enviando adoção:", carta.nome);
 
-        // 📨 Envia para API (Airtable)
         const resposta = await fetch(`${baseURL}/api/adocoes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -207,19 +202,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!resposta.ok)
           throw new Error(resultado.erro || "Erro ao registrar adoção.");
 
-        // 💙 E-mail de confirmação via EmailJS
+        // 💙 Envio de e-mail via EmailJS
         await emailjs.send("service_uffgnhx", "template_4yfc899", {
           to_name: usuario.nome,
           to_email: usuario.email,
-          crianca: carta.nome,
-          presente: carta.sonho,
-          data_entrega: prazo,
-          codigo_cartinha: carta.id,
-          ponto_coleta: pontoSelecionado.nome,
-          endereco: pontoSelecionado.endereco,
-          telefone: pontoSelecionado.telefone || "(11) 99999-9999",
-          pontuacao: "10",
-          nivel: "Doador Estelar 💫",
+          child_name: carta.nome,
+          child_gift: carta.sonho,
+          deadline: prazo,
+          pickup_name: pontoSelecionado.nome,
+          pickup_address: pontoSelecionado.endereco,
+          pickup_phone: pontoSelecionado.telefone || "(11) 99999-9999",
         });
       }
 
