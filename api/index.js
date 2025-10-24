@@ -146,7 +146,7 @@ export default async function handler(req, res) {
     }
 
     // ============================================================
-    // 💌 /api/adocoes — registrar adoção (corrigido final 2025)
+    // 💌 /api/adocoes — registrar adoção (versão final funcional)
     // ============================================================
     if (pathname === "/api/adocoes" && method === "POST") {
       try {
@@ -191,7 +191,10 @@ export default async function handler(req, res) {
           if (cartinhaRecord.length > 0) {
             const registroId = cartinhaRecord[0].id;
             await base("cartinhas").update([
-              { id: registroId, fields: { status: "adotada" } },
+              {
+                id: registroId,
+                fields: { status: ["adotada"] }, // 👈 campo multiseleção exige array
+              },
             ]);
             console.log(`✅ Cartinha ${cartinha} atualizada para "adotada".`);
           } else {
